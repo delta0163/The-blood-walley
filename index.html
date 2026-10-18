@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>The Walley of Blood</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game">
+    <div id="office">
+      <div class="back-wall"></div>
+      <div class="floor"></div>
+
+      <div id="window" class="object">
+        <span>ОКНО</span>
+        <div class="window-cross"></div>
+        <div id="windowEnemy"></div>
+      </div>
+
+      <div id="leftHall" class="hall object">
+        <span>ЛЕВЫЙ ПРОХОД</span>
+        <div id="leftEnemy" class="enemy"></div>
+      </div>
+
+      <div id="rightHall" class="hall object">
+        <span>ПРАВЫЙ ПРОХОД</span>
+        <div id="rightEnemy" class="enemy"></div>
+      </div>
+
+      <div id="stove" class="object">
+        <div id="fire"></div>
+        <span>ПЕЧЬ</span>
+      </div>
+
+      <div id="woodPile" class="object"></div>
+
+      <div id="desk" class="object">
+        <div id="monitor">
+          <span>WALLEY SECURITY</span>
+        </div>
+        <div id="deskFlashlight"></div>
+      </div>
+
+      <div id="viewFlash"></div>
+    </div>
+
+    <div id="hud">
+      <div id="clock">12:00 AM</div>
+      <div>ОГОНЬ: <span id="fireValue">100</span>%</div>
+      <div class="meter"><div id="fireMeter"></div></div>
+      <div>ДРОВА: <span id="woodValue">0</span></div>
+      <div>ЗАРЯД ФОНАРЯ: <span id="batteryValue">100</span>%</div>
+    </div>
+
+    <div id="message">Ночная смена ещё не началась.</div>
+
+    <div id="controls">
+      <div class="control-group">
+        <button id="cameraBtn">КАМЕРА</button>
+        <button id="flashlightBtn">ВЗЯТЬ ФОНАРИК</button>
+        <button id="checkBtn">ПРОВЕРИТЬ ПРОХОД</button>
+      </div>
+
+      <div class="control-group">
+        <button id="takeWoodBtn">ВЗЯТЬ ДРОВА</button>
+        <button id="stokeBtn">ПОДКИНУТЬ ДРОВА</button>
+      </div>
+    </div>
+
+    <div id="cameraPanel" class="overlay hidden">
+      <section class="panel">
+        <h2>КАМЕРА: ЛЕВЫЙ ПРОХОД</h2>
+        <div id="cameraFeed">
+          <div id="cameraEnemy"></div>
+          <span id="cameraStatus">СИГНАЛ СТАБИЛЕН</span>
+        </div>
+        <button id="scareBtn">ВКЛЮЧИТЬ ОТПУГИВАНИЕ</button>
+        <button id="hideBtn">СПРЯТАТЬСЯ</button>
+        <button id="closeCameraBtn">ЗАКРЫТЬ КАМЕРУ</button>
+      </section>
+    </div>
+
+    <div id="hidePanel" class="overlay hidden">
+      <section class="panel">
+        <h2>ТЫ СПРЯТАЛСЯ</h2>
+        <p id="hideStatus">Слушай шаги. Не вылезай слишком рано.</p>
+        <button id="unhideBtn">ВЫЛЕЗТИ</button>
+      </section>
+    </div>
+
+    <div id="startPanel" class="overlay">
+      <section class="panel">
+        <h1>THE WALLEY OF BLOOD</h1>
+        <p>ПРОБНАЯ НОЧЬ</p>
+        <p class="description">
+          Ты остался один в охранном помещении.
+          Следи за проходами, поддерживай огонь в печи
+          и не дай существам проникнуть внутрь.
+        </p>
+        <button id="startBtn">НАЧАТЬ НОЧЬ</button>
+      </section>
+    </div>
+
+    <div id="endPanel" class="overlay hidden">
+      <section class="panel">
+        <h1 id="endTitle">СМЕНА ОКОНЧЕНА</h1>
+        <p id="endReason"></p>
+        <button id="restartBtn">ЗАНОВО</button>
+      </section>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
