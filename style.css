@@ -1,0 +1,467 @@
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #030404;
+  color: #dedbd0;
+  font-family: Arial, sans-serif;
+  touch-action: none;
+}
+
+button {
+  background: #171a19;
+  border: 1px solid #64665b;
+  color: #eeeadd;
+  padding: 11px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  background: #69231e;
+}
+
+#game {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #090b0b;
+}
+
+#office {
+  position: absolute;
+  inset: -4%;
+  transform: perspective(800px) rotateY(0deg) scale(1.05);
+  transform-origin: center;
+  transition: transform 0.35s ease-out;
+  overflow: hidden;
+  background: radial-gradient(ellipse, #33332e, #101212 65%, #030404);
+}
+
+.back-wall {
+  position: absolute;
+  inset: 0 0 30%;
+  background: linear-gradient(#080a0a, #272925 65%, #151715);
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+
+.floor {
+  position: absolute;
+  bottom: 0;
+  height: 40%;
+  width: 100%;
+  background: repeating-linear-gradient(
+    165deg,
+    #171917 0 3px,
+    #22231f 4px 6px
+  );
+  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+}
+
+.object {
+  position: absolute;
+  cursor: pointer;
+}
+
+#window {
+  top: 13%;
+  left: 32%;
+  width: 36%;
+  height: 32%;
+  border: 8px solid #30312c;
+  background: radial-gradient(ellipse, #171a18, #020303 75%);
+  box-shadow: inset 0 0 30px #000, 0 0 12px #000;
+  z-index: 2;
+}
+
+#window > span,
+#stove > span {
+  position: absolute;
+  top: -20px;
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #aaa99c;
+}
+
+.window-cross {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 48%, #34352f 49%, #34352f 51%, transparent 52%),
+    linear-gradient(transparent 48%, #34352f 49%, #34352f 51%, transparent 52%);
+}
+
+.hall {
+  top: 20%;
+  width: 20%;
+  height: 43%;
+  background: linear-gradient(90deg, #020303, #171918, #020303);
+  border: 6px solid #2c2e29;
+  box-shadow: inset 0 0 30px #000;
+  z-index: 3;
+}
+
+.hall > span {
+  position: absolute;
+  top: -18px;
+  width: 100%;
+  font-size: 8px;
+  text-align: center;
+  color: #96958a;
+  letter-spacing: 1px;
+}
+
+#leftHall {
+  left: 3%;
+  clip-path: polygon(0 0, 100% 10%, 100% 100%, 0 90%);
+}
+
+#rightHall {
+  right: 3%;
+  clip-path: polygon(0 10%, 100% 0, 100% 90%, 0 100%);
+}
+
+.enemy {
+  display: none;
+  position: absolute;
+  left: 22%;
+  bottom: 0;
+  width: 56%;
+  height: 78%;
+  background: linear-gradient(90deg, #080909, #373730, #080909);
+  clip-path: polygon(
+    35% 0, 65% 0, 76% 18%, 68% 38%,
+    100% 100%, 0 100%, 32% 38%, 24% 18%
+  );
+  filter: drop-shadow(0 0 12px #000);
+  animation: tremble 0.14s infinite;
+}
+
+.enemy::before {
+  content: "";
+  position: absolute;
+  top: 17%;
+  left: 22%;
+  width: 56%;
+  height: 5px;
+  background: #d02b20;
+  box-shadow: 0 0 12px #f22;
+}
+
+.enemy.visible {
+  display: block;
+}
+
+@keyframes tremble {
+  0% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+#stove {
+  bottom: 9%;
+  left: 5%;
+  width: 18%;
+  height: 24%;
+  border: 5px solid #30312b;
+  background: linear-gradient(90deg, #171817, #49483e, #171817);
+  z-index: 5;
+}
+
+#fire {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 24%;
+  bottom: 15%;
+  background: radial-gradient(ellipse at bottom, #ffb02e, #e64412 35%, #280a05 75%);
+  box-shadow: 0 0 18px #a42a0b;
+  transition: opacity 0.3s;
+  animation: flame 0.5s infinite alternate;
+}
+
+#fire.cold {
+  opacity: 0.05;
+  box-shadow: none;
+}
+
+@keyframes flame {
+  from { filter: brightness(0.8); }
+  to { filter: brightness(1.3); }
+}
+
+#woodPile {
+  left: 5%;
+  bottom: 3%;
+  width: 17%;
+  height: 4%;
+  background: repeating-linear-gradient(
+    0deg, #603d25 0 5px, #24160d 6px 8px
+  );
+  z-index: 4;
+}
+
+#desk {
+  left: 23%;
+  bottom: 8%;
+  width: 54%;
+  height: 23%;
+  background: linear-gradient(#424239, #1b1d1a 35%, #080909);
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+  border-top: 5px solid #59584b;
+  z-index: 6;
+}
+
+#monitor {
+  position: absolute;
+  top: -35%;
+  left: 38%;
+  width: 24%;
+  height: 40%;
+  background: #07100e;
+  border: 5px solid #34362e;
+  box-shadow: 0 0 15px #14221c;
+}
+
+#monitor span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 7px;
+  color: #718a79;
+}
+
+#deskFlashlight {
+  position: absolute;
+  top: 15%;
+  left: 16%;
+  width: 14%;
+  height: 9%;
+  border-radius: 5px;
+  background: #b5b19c;
+  transform: rotate(-12deg);
+}
+
+#windowEnemy {
+  display: none;
+}
+
+#viewFlash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+#viewFlash.flash {
+  animation: cameraFlash 0.18s;
+}
+
+@keyframes cameraFlash {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+#hud {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  text-align: right;
+  font: 12px monospace;
+  line-height: 1.7;
+  text-shadow: 0 2px 4px black;
+}
+
+#clock {
+  font-size: 19px;
+  margin-bottom: 6px;
+}
+
+.meter {
+  width: 110px;
+  height: 7px;
+  background: #242624;
+  border: 1px solid #5b5c51;
+  margin: 0 0 5px auto;
+}
+
+#fireMeter {
+  height: 100%;
+  width: 100%;
+  background: #c04c2c;
+  transition: width 0.3s;
+}
+
+#message {
+  position: absolute;
+  left: 50%;
+  bottom: 32%;
+  transform: translateX(-50%);
+  z-index: 18;
+  width: max-content;
+  max-width: 90%;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid #4a4b42;
+  font-size: 12px;
+  text-align: center;
+}
+
+#controls {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  z-index: 25;
+}
+
+.control-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.control-group button {
+  flex: 1;
+  min-width: 95px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.94);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.panel {
+  width: min(500px, 100%);
+  padding: 22px 16px;
+  border: 1px solid #5d5d50;
+  background: #0b0d0c;
+  box-shadow: 0 0 30px #000;
+}
+
+.panel h1 {
+  color: #b52b23;
+  letter-spacing: 2px;
+  font-size: 25px;
+}
+
+.panel h2 {
+  font-size: 17px;
+}
+
+.panel p {
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.panel button {
+  margin: 4px;
+}
+
+#cameraFeed {
+  height: 210px;
+  margin: 14px 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid #41443a;
+  background: repeating-linear-gradient(
+    0deg, #0b100e 0 3px, #17201a 4px 5px
+  );
+  font: 12px monospace;
+  color: #a3b4a0;
+}
+
+#cameraFeed.danger {
+  animation: staticNoise 0.15s infinite;
+  color: #ff5145;
+}
+
+@keyframes staticNoise {
+  0% { filter: contrast(1); }
+  50% { filter: contrast(2) brightness(1.5); }
+  100% { filter: contrast(1); }
+}
+
+#cameraEnemy {
+  display: none;
+  position: absolute;
+  inset: 15% 35%;
+  background: #30332d;
+  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+}
+
+#cameraEnemy.visible {
+  display: block;
+}
+
+#cameraStatus {
+  z-index: 2;
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+@media (min-width: 650px) {
+  #controls {
+    flex-direction: row;
+    justify-content: space-between;
+    bottom: 16px;
+  }
+
+  .control-group {
+    max-width: 48%;
+  }
+
+  .control-group button {
+    flex: initial;
+  }
+
+  #window {
+    width: 30%;
+    left: 35%;
+  }
+
+  .hall {
+    width: 15%;
+  }
+
+  #desk {
+    width: 42%;
+    left: 29%;
+  }
+}
