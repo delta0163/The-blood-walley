@@ -15,12 +15,11 @@
     </header>
 
     <section id="office" class="office front">
-      <div class="darkness"></div>
-
       <div class="wall">
         <div class="wall-light"></div>
         <div class="wall-mark"></div>
       </div>
+      <div class="darkness"></div>
 
       <div id="leftPassage" class="passage left-passage">
         <div class="passage-frame"></div>
@@ -37,7 +36,7 @@
       </div>
 
       <div id="backRoom" class="back-room">
-        <div class="stove">
+        <div class="stove" id="stove">
           <div class="stove-pipe"></div>
           <div class="stove-body">
             <div class="stove-door">
@@ -45,7 +44,7 @@
             </div>
           </div>
         </div>
-        <div class="back-label">ПЕЧКА</div>
+        <div class="back-label">ПЕЧКА — ПЕРЕТАЩИ ДРОВА СЮДА</div>
       </div>
 
       <div class="desk">
@@ -54,53 +53,52 @@
             <span class="flashlight-icon">🔦</span>
             <span>Фонарик</span>
           </button>
-
+          <button id="batteryItem" class="item battery-item">
+            <span class="battery-icon">🔋</span>
+            <span>4 батарейки</span>
+          </button>
           <button id="woodItem" class="item wood-item">
             <span class="wood-icon">🪵</span>
             <span>Дрова</span>
           </button>
-
           <div class="paper">ЖУРНАЛ<br>СМЕНЫ</div>
           <div class="mug">☕</div>
         </div>
         <div class="desk-front"></div>
       </div>
 
+      <button id="heldFlashlight" class="held-item hidden">🔦</button>
+      <button id="batterySlot" class="held-item battery-slot hidden">🔋</button>
+
+      <div id="flashCharge" class="flash-charge hidden">
+        <div id="flashChargeFill" class="flash-charge-fill"></div>
+      </div>
+
+      <button id="carriedWood" class="carried-wood hidden">🪵</button>
       <div id="flashBeam" class="flash-beam"></div>
-      <div id="notice" class="notice">Смена началась...</div>
+      <div id="notice" class="notice">12 AM — смена началась.</div>
       <div id="message" class="message"></div>
     </section>
 
     <section class="controls">
       <div class="turn-controls">
-        <button id="turnLeft" class="control-button">
-          ◀ ВЛЕВО
-        </button>
-        <button id="turnFront" class="control-button">
-          ПРЯМО
-        </button>
-        <button id="turnRight" class="control-button">
-          ВПРАВО ▶
-        </button>
+        <button id="turnLeft" class="control-button">◀ ВЛЕВО</button>
+        <button id="turnFront" class="control-button">ПРЯМО</button>
+        <button id="turnRight" class="control-button">ВПРАВО ▶</button>
       </div>
 
       <div class="action-controls">
-        <button id="useFlashlight" class="action-button" disabled>
-          🔦 СВЕТИТЬ
-        </button>
-        <button id="putWood" class="action-button" disabled>
-          🪵 ПОЛОЖИТЬ ДРОВА
-        </button>
-        <button id="turnBack" class="action-button">
-          🔥 К ПЕЧКЕ
-        </button>
+        <button id="turnBack" class="action-button">🔥 К ПЕЧКЕ</button>
       </div>
 
       <div class="status">
         <div>Фонарик: <span id="flashStatus">на столе</span></div>
+        <div>Запас: <span id="batteryStatus">4 батарейки</span></div>
         <div>Дрова: <span id="woodStatus">на столе</span></div>
-        <div>Огонь: <span id="fireStatus">горит</span></div>
+        <div>Огонь: <span id="fireStatus">горит хорошо</span></div>
       </div>
+
+      <div class="help">Свайп влево/вправо — повернуться. Нажимай прямо на предметы.</div>
     </section>
 
     <div id="overlay" class="overlay hidden">
