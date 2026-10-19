@@ -16,8 +16,24 @@
   </div>
 
   <main id="game">
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <section id="mainMenu" class="screen-menu">
+      <div class="menu-content">
+        <div class="menu-subtitle">НОЧНАЯ СМЕНА</div>
+        <h1>THE VALLEY<br><span>OF BLOOD</span></h1>
+        <p class="menu-description">Ты должен дожить до шести утра.</p>
+        <button id="newGameButton">НОВАЯ ИГРА</button>
+        <button id="continueButton">ПРОДОЛЖИТЬ</button>
+        <button id="menuJournalButton">ЖУРНАЛ</button>
+        <button id="settingsButton">НАСТРОЙКИ</button>
+        <div id="menuProgress">СМЕНА 1 · ЗАПИСЕЙ: 1</div>
+      </div>
+    </section>
+
+    <!-- ИГРА -->
     <header class="topbar">
       <div class="logo">THE VALLEY OF BLOOD</div>
+      <div id="shiftLabel">СМЕНА 1</div>
       <div id="clock">12 AM</div>
     </header>
 
@@ -51,7 +67,7 @@
             </div>
           </div>
         </div>
-        <div class="back-label">ПЕРЕТАЩИ ДРОВА В ПЕЧКУ</div>
+        <div class="back-label">ПЕРЕТАЩИ ДРОВА НА ПЕЧКУ</div>
       </div>
 
       <div class="desk">
@@ -60,65 +76,71 @@
             🔦 <span>Фонарик</span>
           </button>
           <button id="batteryItem" class="item battery-item">
-            🔋 <span>Забрать батарейки</span>
+            🔋 <span>Запас батареек</span>
           </button>
           <div class="paper">ЖУРНАЛ<br>СМЕНЫ</div>
           <div class="mug">☕</div>
         </div>
-
         <div class="desk-front"></div>
 
         <div class="wood-storage">
-          <div class="wood-storage-label">ЗАПАС ДРОВ</div>
+          <div class="wood-storage-label">ЗАПАС ДРОВ ПОД СТОЛОМ</div>
           <div id="woodPile" class="wood-pile">
-            <button class="log" data-log="1" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="2" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="3" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="4" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="5" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="6" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="7" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="8" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="9" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="10" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="11" aria-label="Взять дрова">🪵</button>
-            <button class="log" data-log="12" aria-label="Взять дрова">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
+            <button class="log" aria-label="Взять полено">🪵</button>
           </div>
         </div>
       </div>
 
-      <button id="heldFlashlight" class="held-item hidden" aria-label="Вспышка фонарика">🔦</button>
-      <button id="batterySlot" class="held-item battery-slot hidden" aria-label="Вставить батарейку">🔋</button>
+      <button id="heldFlashlight" class="held-item hidden" aria-label="Использовать фонарик">🔦</button>
+      <button id="batterySlot" class="held-item battery-slot hidden" aria-label="Заменить батарейку">🔋</button>
       <div id="flashCharge" class="flash-charge hidden">
         <div id="flashChargeFill" class="flash-charge-fill"></div>
       </div>
 
-      <button id="carriedWood" class="carried-wood hidden" aria-label="Перетащить дрова">🪵</button>
+      <button id="carriedWood" class="carried-wood hidden" aria-label="Перетащить полено">🪵</button>
       <div id="flashBeam" class="flash-beam"></div>
-      <div id="notice" class="notice">12 AM — смена началась.</div>
+      <div id="notice" class="notice">Ожидание начала смены</div>
       <div id="message" class="message"></div>
 
       <aside id="hud" class="hud">
         <div>Огонь: <b id="fireValue">100%</b></div>
         <div>Заряд фонаря: <b id="chargeValue">100%</b></div>
         <div>Батарейки: <b id="batteryValue">4</b></div>
-        <div>Дрова: <b id="woodValue">12</b></div>
+        <div>Дрова: <b id="woodValue">18</b></div>
       </aside>
 
       <button id="openCameras" class="camera-open">📹 КАМЕРЫ</button>
 
+      <!-- КАМЕРЫ -->
       <section id="cameraPanel" class="camera-panel hidden">
         <div class="camera-header">
           <span>СИСТЕМА НАБЛЮДЕНИЯ</span>
           <button id="closeCameras">✕</button>
         </div>
-        <div id="cameraFeed" class="camera-feed">
+        <div class="camera-feed">
           <div class="camera-noise"></div>
           <div id="cameraScene" class="camera-scene">
             <div class="cam-tunnel"></div>
             <div id="cameraEnemy" class="camera-enemy hidden">?</div>
           </div>
-          <div class="camera-label" id="cameraLabel">CAM 01 — ЛЕВЫЙ ПРОХОД</div>
+          <div id="cameraLabel" class="camera-label">CAM 01 — ВХОД</div>
           <div class="camera-rec">● REC</div>
         </div>
         <div class="camera-buttons">
@@ -130,6 +152,7 @@
       </section>
     </section>
 
+    <!-- УПРАВЛЕНИЕ -->
     <section class="controls">
       <div class="turn-controls">
         <button id="turnLeft" class="control-button">◀ ВЛЕВО</button>
@@ -137,16 +160,70 @@
         <button id="turnRight" class="control-button">ВПРАВО ▶</button>
       </div>
       <button id="turnBack" class="action-button">🔥 К ПЕЧКЕ</button>
-      <div class="help">Свайп по экрану — повернуться. Дрова бери под столом и перетаскивай к печке.</div>
+      <button id="openJournalDuringGame" class="control-button">📖 ЖУРНАЛ</button>
+      <div class="help">Свайп — поворот. Полено перетаскивай на печку.</div>
     </section>
 
-    <div id="overlay" class="overlay hidden">
-      <div class="overlay-card">
-        <h1 id="overlayTitle">КОНЕЦ СМЕНЫ</h1>
-        <p id="overlayText"></p>
-        <button id="restart">ЗАНОВО</button>
+    <!-- ЖУРНАЛ -->
+    <section id="journalScreen" class="screen-menu hidden">
+      <div class="journal-window">
+        <header class="journal-header">
+          <div>
+            <div class="menu-subtitle">АРХИВ НАБЛЮДЕНИЙ</div>
+            <h2>ЖУРНАЛ</h2>
+          </div>
+          <button id="closeJournalButton">НАЗАД</button>
+        </header>
+        <p class="journal-intro">
+          Информация открывается по мере прохождения смен.
+          Записи с замком пока недоступны.
+        </p>
+        <div class="journal-layout">
+          <nav id="journalList" class="journal-list"></nav>
+          <article id="journalEntry" class="journal-entry">
+            <div class="locked-symbol">?</div>
+            <h3>Выбери запись</h3>
+            <p>Здесь появится доступная информация.</p>
+          </article>
+        </div>
+        <div id="journalCounter" class="journal-counter">Открыто 1 запись</div>
       </div>
-    </div>
+    </section>
+
+    <!-- ОТЧЁТ ПОСЛЕ СМЕНЫ -->
+    <section id="shiftReport" class="screen-menu hidden">
+      <div class="report-card">
+        <div class="menu-subtitle">ОТЧЁТ ДЕЖУРНОГО</div>
+        <h2 id="reportTitle">6 AM</h2>
+        <p id="reportText">Ты пережил смену.</p>
+        <h3>ОБНОВЛЕНИЯ ЖУРНАЛА</h3>
+        <div id="reportUnlocks">Новых записей нет.</div>
+        <button id="reportJournalButton">ЧИТАТЬ ЖУРНАЛ</button>
+        <button id="nextShiftButton">СЛЕДУЮЩАЯ СМЕНА</button>
+        <button id="reportMenuButton">ГЛАВНОЕ МЕНЮ</button>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section id="settingsScreen" class="screen-menu hidden">
+      <div class="report-card">
+        <div class="menu-subtitle">ПАРАМЕТРЫ</div>
+        <h2>НАСТРОЙКИ</h2>
+        <p>Прогресс сохраняется в браузере этого устройства.</p>
+        <button id="resetProgressButton">СБРОСИТЬ ПРОГРЕСС</button>
+        <button id="closeSettingsButton">НАЗАД</button>
+      </div>
+    </section>
+
+    <!-- ПОРАЖЕНИЕ -->
+    <section id="overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h1 id="overlayTitle">СМЕНА ПРОВАЛЕНА</h1>
+        <p id="overlayText">Ты не смог дожить до утра.</p>
+        <button id="restart">ПОВТОРИТЬ СМЕНУ</button>
+        <button id="defeatMenuButton">ГЛАВНОЕ МЕНЮ</button>
+      </div>
+    </section>
   </main>
 
   <script src="game.js"></script>
