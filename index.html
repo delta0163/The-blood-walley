@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#090909">
   <title>The Valley of Blood</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -11,188 +11,223 @@
   <div id="portraitWarning">Поверни телефон горизонтально</div>
 
   <main id="game">
-    <section id="menu" class="screen active">
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <section id="menu" class="screen screen-menu active">
       <div class="menu-content">
-        <p class="eyebrow">Ночная смена</p>
+        <p class="eyebrow">НОЧНАЯ СМЕНА</p>
         <h1>THE VALLEY<br><span>OF BLOOD</span></h1>
-        <p class="subtitle">Ты должен продержаться до утра.</p>
-        <button id="newGame">Начать смену</button>
+        <p class="menu-description">Ты должен продержаться до утра.</p>
+        <button id="newGame">Начать новую игру</button>
         <button id="continueGame" class="secondary">Продолжить</button>
         <button id="openJournal" class="secondary">Журнал</button>
         <button id="openSettings" class="secondary">Настройки</button>
+        <p id="menuProgress">Последняя смена: 1</p>
       </div>
     </section>
 
+    <!-- ОФИС -->
     <section id="office" class="screen">
-      <header class="hud">
-        <div>
+      <header class="topbar">
+        <div class="logo">THE VALLEY <span>OF BLOOD</span></div>
+        <div class="hud">
           <strong id="shiftLabel">Смена 1</strong>
           <span id="timeLabel">12 AM</span>
-        </div>
-        <div class="meters">
           <span>Батарея: <b id="batteryLabel">100%</b></span>
           <span>Огонь: <b id="fireLabel">70%</b></span>
         </div>
         <button id="pauseButton" class="small">Пауза</button>
       </header>
 
-      <div id="officeScene" class="office-scene view-front">
+      <div id="officeScene" class="office view-front">
         <div class="wall"></div>
-        <div class="ceiling"></div>
-        <div class="floor"></div>
+        <div class="wall-light"></div>
+        <div class="wall-mark"></div>
+        <div class="darkness"></div>
 
         <div class="passage left-passage">
+          <div class="passage-frame"></div>
+          <div class="passage-floor"></div>
           <div class="passage-label">ЛЕВЫЙ ПРОХОД</div>
-          <div id="leftEnemy" class="enemy-shadow"></div>
+          <div id="leftEnemy" class="enemy" aria-label="Угроза в левом проходе">
+            <div class="enemy-eyes"><i></i><i></i></div>
+            <div class="enemy-mouth"></div>
+          </div>
         </div>
 
         <div class="passage right-passage">
+          <div class="passage-frame"></div>
+          <div class="passage-floor"></div>
           <div class="passage-label">ПРАВЫЙ ПРОХОД</div>
-          <div id="rightEnemy" class="enemy-shadow"></div>
+          <div id="rightEnemy" class="enemy" aria-label="Угроза в правом проходе">
+            <div class="enemy-eyes"><i></i><i></i></div>
+            <div class="enemy-mouth"></div>
+          </div>
         </div>
 
-        <div id="backRoom" class="back-room">
+        <div class="back-room">
           <div class="back-label">КОМНАТА С ПЕЧКОЙ</div>
+          <div class="stove-pipe"></div>
           <div id="stove" class="stove">
-            <div class="stove-pipe"></div>
             <div class="stove-body">
               <div id="fire" class="fire">🔥</div>
               <div class="stove-door"></div>
             </div>
           </div>
-          <div class="wood-pile">
-            <span>ДРОВА</span>
-            <div id="woodPile">🪵 🪵 🪵 🪵</div>
+          <div class="wood-storage">
+            <div class="wood-storage-label">ЗАПАС ДРОВ</div>
+            <div id="woodPile" class="wood-pile">🪵 🪵 🪵 🪵</div>
           </div>
         </div>
 
         <div class="desk">
-          <div class="desk-edge"></div>
           <div class="desk-top">
-            <div class="laptop">
-              <div class="laptop-screen">
-                <span>КАМЕРЫ</span>
-                <button id="cameraButton">Открыть</button>
-              </div>
-              <div class="laptop-base"></div>
+            <div class="item laptop-item">
+              <span>НОУТБУК 01</span>
+              <button id="cameraButton">КАМЕРЫ</button>
             </div>
-
-            <div class="laptop second-laptop">
-              <div class="laptop-screen">
-                <span>СИСТЕМЫ</span>
-                <button id="repairLaptopButton">Открыть</button>
-              </div>
-              <div class="laptop-base"></div>
+            <div class="item laptop-item second-laptop">
+              <span>НОУТБУК 02</span>
+              <button id="repairLaptopButton">СИСТЕМЫ</button>
             </div>
-
-            <div class="desk-note">Не забывай следить за огнём.</div>
+            <div class="paper">Не забывай следить за огнём.</div>
+            <div class="mug">☕</div>
           </div>
+          <div class="desk-front"></div>
         </div>
 
-        <div id="carriedWood" aria-label="Перетащить полено">🪵</div>
+        <div id="carriedWood" class="carried-wood" aria-label="Перетащить полено" role="button">🪵</div>
+        <div id="flashBeam" class="flash-beam"></div>
         <div id="flashEffect"></div>
+        <div id="notice" class="notice">ОФИС</div>
       </div>
 
-      <div class="bottom-controls">
-        <div class="control-group">
-          <button id="lookLeft">◀ ЛЕВО</button>
-          <button id="lookFront">ВПЕРЁД</button>
-          <button id="lookRight">ПРАВО ▶</button>
-          <button id="lookBack">К ПЕЧКЕ</button>
+      <!-- УПРАВЛЕНИЕ -->
+      <div class="controls">
+        <div class="turn-controls">
+          <button id="lookLeft" class="control-button">◀ ЛЕВО</button>
+          <button id="lookFront" class="control-button">ВПЕРЁД</button>
+          <button id="lookRight" class="control-button">ПРАВО ▶</button>
+          <button id="lookBack" class="control-button">К ПЕЧКЕ</button>
         </div>
-        <div class="control-group">
-          <button id="flashlightButton">ВСПЫШКА</button>
-          <button id="takeWoodButton">Взять дрова</button>
-          <button id="camerasButton">Камеры</button>
-          <button id="journalButton">Журнал</button>
+        <div class="action-controls">
+          <button id="flashlightButton" class="action-button">ВСПЫШКА</button>
+          <button id="takeWoodButton" class="action-button">ВЗЯТЬ ДРОВА</button>
+          <button id="camerasButton" class="action-button">КАМЕРЫ</button>
+          <button id="journalButton" class="action-button">ЖУРНАЛ</button>
         </div>
       </div>
 
-      <div id="cameraPanel" class="panel hidden">
-        <div class="panel-header">
-          <h2>СИСТЕМА КАМЕР</h2>
+      <div id="message" class="message"></div>
+
+      <!-- КАМЕРЫ -->
+      <div id="cameraPanel" class="camera-panel hidden">
+        <div class="camera-header">
+          <h2>СИСТЕМА НАБЛЮДЕНИЯ</h2>
           <button id="closeCameras">Закрыть</button>
         </div>
-        <div class="camera-grid">
-          <button class="camera-tile selected" data-camera="1">КАМЕРА 01<br><small>Главный коридор</small></button>
-          <button class="camera-tile" data-camera="2">КАМЕРА 02<br><small>Левый проход</small></button>
-          <button class="camera-tile" data-camera="3">КАМЕРА 03<br><small>Правый проход</small></button>
-          <button class="camera-tile" data-camera="4">КАМЕРА 04<br><small>Комната с печкой</small></button>
+
+        <div class="camera-buttons">
+          <button class="camera-tile selected" data-camera="1">КАМЕРА 01<br>Коридор</button>
+          <button class="camera-tile" data-camera="2">КАМЕРА 02<br>Левый проход</button>
+          <button class="camera-tile" data-camera="3">КАМЕРА 03<br>Правый проход</button>
+          <button class="camera-tile" data-camera="4">КАМЕРА 04<br>Печка</button>
         </div>
-        <div id="cameraFeed">
-          <div class="camera-static"></div>
-          <p id="cameraFeedText">КАМЕРА 01 — ПОМЕХИ</p>
-          <div id="cameraEnemy"></div>
+
+        <div id="cameraFeed" class="camera-feed">
+          <div class="camera-noise"></div>
+          <div id="cameraScene" class="camera-scene">
+            <div class="cam-tunnel"></div>
+            <div id="cameraEnemy" class="camera-enemy"></div>
+          </div>
+          <p id="cameraFeedText" class="camera-label">КАМЕРА 01 — КОРИДОР</p>
+          <span class="camera-rec">● REC</span>
         </div>
+
         <div class="alarm-area">
           <p>СИГНАЛИЗАЦИЯ: <b id="alarmStatus">ГОТОВА</b></p>
           <button id="alarmButton">ВКЛЮЧИТЬ СИГНАЛИЗАЦИЮ</button>
           <small id="alarmHint">Отпугивает НеНе в левом проходе.</small>
         </div>
+        <p class="camera-help">НеНе не боится вспышки. Используй сигнализацию.</p>
       </div>
 
-      <div id="repairPanel" class="panel hidden">
-        <div class="panel-header">
-          <h2>ВТОРОЙ НОУТБУК</h2>
+      <!-- РЕМОНТ -->
+      <div id="repairPanel" class="camera-panel hidden">
+        <div class="camera-header">
+          <h2>НОУТБУК 02 — РЕМОНТ</h2>
           <button id="closeRepair">Закрыть</button>
         </div>
         <p>СИСТЕМА СИГНАЛИЗАЦИИ</p>
         <p id="repairStatus">Состояние: исправна</p>
         <div class="repair-track"><div id="repairProgress"></div></div>
-        <button id="startRepairButton">Начать ремонт</button>
-        <p class="hint">Ремонт займёт 20 секунд. Во время ремонта сигнализация не работает.</p>
+        <button id="startRepairButton">НАЧАТЬ РЕМОНТ</button>
+        <p class="camera-help">Ремонт занимает 20 секунд. Пока он идёт, сигнализация недоступна.</p>
       </div>
 
-      <div id="pausePanel" class="panel hidden">
+      <!-- ПАУЗА -->
+      <div id="pausePanel" class="camera-panel pause-panel hidden">
         <h2>ПАУЗА</h2>
         <button id="resumeButton">Продолжить</button>
         <button id="quitButton" class="secondary">В меню</button>
       </div>
 
-      <div id="message" class="message"></div>
-    </section>
-
-    <section id="journal" class="screen">
-      <h2>ЖУРНАЛ НАБЛЮДЕНИЙ</h2>
-      <p class="subtitle">Записи открываются по мере прохождения смен.</p>
-      <div id="journalEntries"></div>
-      <button id="journalBack">Назад</button>
-    </section>
-
-    <section id="settings" class="screen">
-      <h2>НАСТРОЙКИ</h2>
-      <label class="setting-row">
-        Громкость эффектов
-        <input id="volumeSetting" type="range" min="0" max="100" value="70">
-      </label>
-      <label class="setting-row">
-        Длительность смены
-        <select id="shiftLength">
-          <option value="90">Короткая</option>
-          <option value="150" selected>Обычная</option>
-          <option value="210">Длинная</option>
-        </select>
-      </label>
-      <button id="settingsBack">Назад</button>
-    </section>
-
-    <section id="result" class="screen">
-      <h2 id="resultTitle">Смена завершена</h2>
-      <p id="resultText"></p>
-      <button id="resultContinue">Продолжить</button>
-      <button id="resultMenu" class="secondary">В меню</button>
-    </section>
-
-    <div id="jumpscare" class="hidden">
-      <div id="scareFace">
-        <div class="scare-eyes"><i></i><i></i></div>
-        <div class="scare-mouth"></div>
+      <!-- СКРИМЕР -->
+      <div id="jumpscare" class="overlay hidden">
+        <div id="scareFace" class="scare-face">
+          <div class="scare-eyes"><i></i><i></i></div>
+          <div class="scare-nose"></div>
+          <div class="scare-mouth"></div>
+        </div>
+        <h2 id="scareName">НЕМКА</h2>
+        <p id="scareCaption">ТЫ НЕ УСПЕЛ...</p>
       </div>
-      <h2 id="scareName">НЕМКА</h2>
-      <p>ТЫ НЕ УСПЕЛ...</p>
-    </div>
+    </section>
+
+    <!-- ЖУРНАЛ -->
+    <section id="journal" class="screen">
+      <div class="journal-window">
+        <div class="journal-header">
+          <h2>ЖУРНАЛ НАБЛЮДЕНИЙ</h2>
+          <p>Записи открываются по мере прохождения смен.</p>
+        </div>
+        <div class="journal-layout">
+          <div id="journalEntries" class="journal-list"></div>
+        </div>
+        <button id="journalBack">Назад</button>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section id="settings" class="screen">
+      <div class="menu-content">
+        <h2>НАСТРОЙКИ</h2>
+        <label class="setting-row">
+          Громкость эффектов
+          <input id="volumeSetting" type="range" min="0" max="100" value="70">
+        </label>
+        <label class="setting-row">
+          Длительность смены
+          <select id="shiftLength">
+            <option value="90">Короткая</option>
+            <option value="150" selected>Обычная</option>
+            <option value="210">Длинная</option>
+          </select>
+        </label>
+        <button id="settingsBack">Назад</button>
+      </div>
+    </section>
+
+    <!-- РЕЗУЛЬТАТ -->
+    <section id="result" class="screen">
+      <div class="menu-content">
+        <h2 id="resultTitle">Смена завершена</h2>
+        <p id="resultText"></p>
+        <button id="resultContinue">Продолжить</button>
+        <button id="resultMenu" class="secondary">В меню</button>
+      </div>
+    </section>
   </main>
 
   <script src="game.js"></script>
 </body>
-</html>
+  </html>
