@@ -1,391 +1,304 @@
 
 const $ = id => document.getElementById(id);
 
-const game = {
-  started: false,
-  ended: false,
-  seconds: 0,
-  fire: 100,
-  wood: 0,
-  battery: 100,
-  flashlight: false,
-  holdingFlashlight: false,
-  rightEnemy: false,
-  leftEnemy: false,
-  rightDanger: 0,
-  leftDanger: 0,
-  flashCount: 0,
-  scared: false,
-  hiding: false,
-  hideTime: 0,
-  view: 0,
-  lastFlash: 0,
-  lastWood: 0
-};
+const office = $("office");
+const message = $("message");
+const notice = $("notice");
 
-function say(text) {
-  $("message").textContent = text;
+let view = "front";
+let hasFlashlight = false;
+let hasWood = false;
+let enemyPresent = false;
+let enemyScared = false;
+let fireLevel = 100;
+let seconds = 0;
+let running = true;
+let flashlightReady = false;
+let gameTimer = null;
+let enemyTimer = null;
+let fireTimer = null;
+
+const views = ["front", "right", "back", "left"];
+
+function setNotice(text) {
+  notice.textContent = text;
 }
 
-function updateUI() {
-  $("fireValue").textContent = Math.ceil(game.fire);
-  $("fireMeter").style.width = game.fire + "%";
-  $("woodValue").textContent = game.wood;
-  $("batteryValue").textContent = Math.ceil(game.battery);
+function showMessage(text, duration = 1800) {
+  message.textContent = text;
 
-  $("fire").classList.toggle("cold", game.fire <= 0);
-
-  $("rightEnemy").classList.toggle(
-    "visible", game.rightEnemy
-  );
-
-  $("leftEnemy").classList.toggle(
-    "visible", game.leftEnemy
-  );
-
-  $("cameraEnemy").classList.toggle(
-    "visible", game.leftEnemy
-  );
-
-  $("cameraFeed").classList.toggle(
-    "danger", game.leftEnemy
-  );
-
-  $("cameraStatus").textContent = game.leftEnemy
-    ? "ДВИЖЕНИЕ ОБНАРУЖЕНО"
-    : "СИГНАЛ СТАБИЛЕН";
-
-  $("clock").textContent =
-    String(12 + Math.floor(game.seconds / 30) % 6)
-      .padStart(2, "0") + ":" +
-    String((game.seconds % 30) * 2)
-      .padStart(2, "0") + " AM";
+  if (duration > 0) {
+    setTimeout(() => {
+      if (message.textContent === text) {
+        message.textContent = "";
+      }
+    }, duration);
+  }
 }
 
-function endGame(won, reason) {
-  if (game.ended) return;
+function updateStatus() {
+  $("flashStatus").textContent =
+    hasFlashlight ? "в руке" : "на столе";
 
-  game.ended = true;
-  game.started = false;
+  $("woodStatus").textContent =
+    hasWood ? "в руках" :
+    $("woodItem").classList.contains("taken") ? "в печке" :
+    "на столе";
 
-  $("endTitle").textContent = won
-    ? "6:00 AM — ТЫ ВЫЖИЛ"
-    : "СМЕНА ОКОНЧЕНА";
+  $("fireStatus").textContent =
+    fireLevel > 65 ? "горит хорошо" :
+    fireLevel > 25 ? "слабеет" : "почти погас";
 
-  $("endReason").textContent = reason;
-  $("endPanel").classList.remove("hidden");
+  $("fire").classList.toggle("low", fireLevel <= 35);
+  $("fire").classList.toggle("out", fireLevel <= 0);
+
+  $("useFlashlight").disabled =
+    !hasFlashlight || view !== "right";
+
+  $("putWood").disabled =
+    !hasWood || view !== "back";
 }
 
-function turnHead(direction) {
-  if (!game.started || game.ended) return;
+function turnTo(nextView) {
+  if (!running) return;
 
-  game.view = Math.max(-3, Math.min(3, game.view + direction));
+  view = nextView;
+  office.className = "office " + view;
 
-  $("office").style.transform =
-    `perspective(800px) rotateY(${game.view * 4}deg) scale(1.05)`;
+  // Поворот мгновенный, без медленной анимации.
+  office.style.transform = "none";
 
-  say(
-    game.view < 0 ? "Ты смотришь влево." :
-    game.view > 0 ? "Ты смотришь вправо." :
-    "Ты смотришь прямо."
-  );
+  if (view === "front") {
+    setNotice("Ты смотришь прямо на стол.");
+  } else if (view === "left") {
+    setNotice("Левый проход. Прислушайся...");
+  } else if (view === "right") {
+    setNotice(hasFlashlight
+      ? "Правый проход. Проверь его фонариком."
+      : "Правый проход почти полностью скрыт во тьме.");
+  } else if (view === "back") {
+    setNotice("Печь находится позади тебя.");
+  }
+
+  updateStatus();
 }
 
-$("startBtn").addEventListener("click", () => {
-  $("startPanel").classList.add("hidden");
-  game.started = true;
-  say("Смена началась. Следи за огнём и проходами.");
-  updateUI();
+function turnLeft() {
+  if (!running) return;
+
+  if (view === "front") turnTo("left");
+  else if (view === "left") turnTo("back");
+  else if (view === "back") turnTo("right");
+  else turnTo("front");
+}
+
+function turnRight() {
+  if (!running) return;
+
+  if (view === "front") turnTo("right");
+  else if (view === "right") turnTo("back");
+  else if (view === "back") turnTo("left");
+  else turnTo("front");
+}
+
+$("turnLeft").addEventListener("click", turnLeft);
+$("turnRight").addEventListener("click", turnRight);
+$("turnFront").addEventListener("click", () => turnTo("front"));
+$("turnBack").addEventListener("click", () => turnTo("back"));
+
+// Фонарик: забираем со стола и сразу поворачиваемся вправо.
+$("flashlightItem").addEventListener("click", () => {
+  if (!running || hasFlashlight || view !== "front") return;
+
+  hasFlashlight = true;
+  flashlightReady = true;
+  $("flashlightItem").classList.add("taken");
+
+  showMessage("Ты взял фонарик.");
+  updateStatus();
+
+  // Сразу смотрим в правый проход.
+  setTimeout(() => {
+    if (!running) return;
+    turnTo("right");
+    showMessage("Проверь проход светом.", 2200);
+  }, 100);
 });
 
-$("restartBtn").addEventListener("click", () => {
+// Дрова можно забрать только со стола, когда смотришь прямо.
+$("woodItem").addEventListener("click", () => {
+  if (!running || hasWood || view !== "front") return;
+
+  hasWood = true;
+  $("woodItem").classList.add("taken");
+
+  showMessage("Ты взял дрова. Отнеси их к печке.");
+  updateStatus();
+});
+
+// Проверка правого прохода фонариком.
+$("useFlashlight").addEventListener("click", () => {
+  if (!running || !hasFlashlight || view !== "right") return;
+
+  const beam = $("flashBeam");
+  beam.classList.add("active");
+
+  if (enemyPresent && !enemyScared) {
+    enemyScared = true;
+    const enemy = $("rightEnemy");
+
+    enemy.classList.add("scared");
+    showMessage("ОНО ОТСТУПАЕТ! Возвращайся к столу!");
+
+    office.classList.add("shaking");
+
+    setTimeout(() => {
+      enemy.classList.remove("visible", "scared");
+      enemyPresent = false;
+      enemyScared = false;
+      office.classList.remove("shaking");
+    }, 350);
+  } else {
+    showMessage("В проходе никого нет.");
+  }
+
+  updateStatus();
+
+  // Фонарик гаснет, затем игрок возвращается к столу.
+  setTimeout(() => {
+    beam.classList.remove("active");
+
+    if (running) {
+      turnTo("front");
+    }
+  }, 900);
+});
+
+// Положить дрова в печку.
+$("putWood").addEventListener("click", () => {
+  if (!running || !hasWood || view !== "back") return;
+
+  hasWood = false;
+  fireLevel = Math.min(100, fireLevel + 55);
+
+  $("woodItem").classList.add("taken");
+
+  showMessage("Ты подбросил дрова. Огонь разгорается!");
+  updateStatus();
+
+  setTimeout(() => {
+    if (running) turnTo("front");
+  }, 700);
+});
+
+// Время: 12 AM — 6 AM за три минуты.
+function updateClock() {
+  const totalMinutes = Math.floor(seconds / 30);
+  const hour = 12 + Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+
+  // В этой короткой смене каждые 30 секунд = один игровой час.
+  const gameHour = Math.min(6, Math.floor(seconds / 30));
+
+  $("clock").textContent =
+    gameHour === 0 ? "12 AM" : `${gameHour} AM`;
+
+  if (seconds >= 180) {
+    winGame();
+  }
+}
+
+function spawnEnemy() {
+  if (!running || enemyPresent || enemyScared) return;
+
+  // Противник появляется не каждый раз.
+  if (Math.random() < 0.65) {
+    enemyPresent = true;
+    $("rightEnemy").classList.add("visible");
+    setNotice("Ты слышишь шаги справа...");
+  }
+}
+
+function startEnemyEvents() {
+  enemyTimer = setInterval(() => {
+    if (!running) return;
+
+    // Противник может появиться в правом проходе.
+    if (!enemyPresent && Math.random() < 0.5) {
+      spawnEnemy();
+    }
+
+    // Если игрок долго не проверяет проход, опасность растёт.
+    if (enemyPresent && view === "right" && !hasFlashlight) {
+      setNotice("В темноте что-то движется...");
+    }
+  }, 10000);
+}
+
+function winGame() {
+  if (!running) return;
+
+  running = false;
+  stopTimers();
+
+  $("overlayTitle").textContent = "6 AM";
+  $("overlayText").textContent =
+    "Ты пережил смену в The Valley of Blood.";
+  $("overlay").classList.remove("hidden");
+}
+
+function loseGame() {
+  if (!running) return;
+
+  running = false;
+  stopTimers();
+
+  $("overlayTitle").textContent = "ТЫ НЕ ВЫЖИЛ";
+  $("overlayText").textContent =
+    "Опасность добралась до офиса. Попробуй ещё раз.";
+  $("overlay").classList.remove("hidden");
+}
+
+function stopTimers() {
+  clearInterval(gameTimer);
+  clearInterval(enemyTimer);
+  clearInterval(fireTimer);
+}
+
+$("restart").addEventListener("click", () => {
   location.reload();
 });
 
-// Поворот головы свайпом.
-let startX = 0;
-let startY = 0;
+// Огонь постепенно слабеет.
+function startFire() {
+  fireTimer = setInterval(() => {
+    if (!running) return;
 
-$("game").addEventListener("touchstart", event => {
-  if (event.target.closest("button") ||
-      event.target.closest(".panel")) return;
+    fireLevel = Math.max(0, fireLevel - 2);
+    updateStatus();
 
-  startX = event.changedTouches[0].clientX;
-  startY = event.changedTouches[0].clientY;
-}, { passive: true });
-
-$("game").addEventListener("touchend", event => {
-  if (!game.started || game.ended) return;
-
-  const dx = event.changedTouches[0].clientX - startX;
-  const dy = event.changedTouches[0].clientY - startY;
-
-  if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
-    turnHead(dx > 0 ? 1 : -1);
-  }
-}, { passive: true });
-
-// Поддержка мыши на компьютере.
-let mouseX = null;
-
-$("game").addEventListener("mousedown", event => {
-  if (event.target.closest("button") ||
-      event.target.closest(".panel")) return;
-  mouseX = event.clientX;
-});
-
-$("game").addEventListener("mouseup", event => {
-  if (mouseX === null) return;
-
-  const dx = event.clientX - mouseX;
-  mouseX = null;
-
-  if (Math.abs(dx) > 35) {
-    turnHead(dx > 0 ? 1 : -1);
-  }
-});
-
-$("cameraBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  $("cameraPanel").classList.remove("hidden");
-});
-
-$("closeCameraBtn").addEventListener("click", () => {
-  $("cameraPanel").classList.add("hidden");
-});
-
-// Фонарик.
-$("flashlightBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  game.holdingFlashlight = !game.holdingFlashlight;
-
-  $("flashlightBtn").textContent = game.holdingFlashlight
-    ? "УБРАТЬ ФОНАРИК"
-    : "ВЗЯТЬ ФОНАРИК";
-
-  say(game.holdingFlashlight
-    ? "Фонарик в руке. Проверь правый проход."
-    : "Ты положил фонарик.");
-});
-
-$("checkBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  if (!game.holdingFlashlight) {
-    say("Сначала возьми фонарик со стола!");
-    return;
-  }
-
-  $("office").classList.add("shaking");
-
-  setTimeout(() => {
-    $("office").classList.remove("shaking");
-  }, 700);
-
-  if (game.rightEnemy) {
-    say("КТО-ТО В ПРАВОМ ПРОХОДЕ! Включай и выключай фонарик!");
-    game.lastFlash = 0;
-  } else {
-    say("Ты осмотрел правый проход. Пока всё спокойно.");
-  }
-});
-
-// Включение и выключение фонарика считается отдельным действием.
-$("checkBtn").insertAdjacentHTML(
-  "afterend",
-  '<button id="toggleFlashBtn">ВКЛ./ВЫКЛ. СВЕТ</button>'
-);
-
-$("toggleFlashBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  if (!game.holdingFlashlight) {
-    say("Сначала возьми фонарик!");
-    return;
-  }
-
-  game.flashlight = !game.flashlight;
-
-  if (game.flashlight) {
-    if (game.battery <= 0) {
-      game.flashlight = false;
-      say("Фонарик разряжен!");
-      return;
+    if (fireLevel <= 0) {
+      setNotice("Огонь погас! Нужно принести дрова.");
     }
+  }, 4000);
+}
 
-    game.battery = Math.max(0, game.battery - 4);
+// Запуск смены.
+function startGame() {
+  turnTo("front");
+  updateStatus();
 
-    $("viewFlash").classList.remove("flash");
-    void $("viewFlash").offsetWidth;
-    $("viewFlash").classList.add("flash");
+  gameTimer = setInterval(() => {
+    if (!running) return;
 
-    if (game.rightEnemy) {
-      game.flashCount++;
-      game.rightDanger = 0;
+    seconds++;
+    updateClock();
+  }, 1000);
 
-      if (game.flashCount >= 3) {
-        game.rightEnemy = false;
-        game.flashCount = 0;
-        say("СУЩЕСТВО ОТСТУПИЛО! Пока ты в безопасности.");
-      } else {
-        say("Оно ещё здесь! Переключи фонарик ещё раз.");
-      }
-    } else {
-      say("Ты осветил проход. Никого не видно.");
-    }
-  } else {
-    say(game.rightEnemy
-      ? "Свет выключен. Включи его снова!"
-      : "Фонарик выключен.");
-  }
+  startEnemyEvents();
+  startFire();
 
-  updateUI();
-});
+  setNotice("12 AM — смена началась.");
+}
 
-// Дрова и печь.
-$("takeWoodBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  if (game.wood >= 3) {
-    say("Больше дров взять нельзя — руки заняты.");
-    return;
-  }
-
-  game.wood++;
-  say("Ты взял дрова. Подойди к печи и подкинь их.");
-  updateUI();
-});
-
-$("stokeBtn").addEventListener("click", () => {
-  if (!game.started || game.ended || game.hiding) return;
-
-  if (game.wood <= 0) {
-    say("У тебя нет дров! Сначала возьми их.");
-    return;
-  }
-
-  game.wood--;
-  game.fire = Math.min(100, game.fire + 30);
-
-  say("Дрова в печи. Огонь снова разгорается.");
-  updateUI();
-});
-
-// Камера левого прохода.
-$("scareBtn").addEventListener("click", () => {
-  if (!game.started || game.ended) return;
-
-  if (!game.leftEnemy) {
-    say("На камере никого нет.");
-    return;
-  }
-
-  game.leftEnemy = false;
-  game.scared = true;
-  game.leftDanger = 0;
-
-  say("Отпугивание сработало! Теперь быстро спрячься.");
-  updateUI();
-});
-
-$("hideBtn").addEventListener("click", () => {
-  if (!game.started || game.ended) return;
-
-  $("cameraPanel").classList.add("hidden");
-  $("hidePanel").classList.remove("hidden");
-
-  game.hiding = true;
-  game.hideTime = 0;
-
-  $("hideStatus").textContent =
-    "Ты спрятался. Подожди, пока шаги исчезнут.";
-});
-
-$("unhideBtn").addEventListener("click", () => {
-  if (!game.started || game.ended) return;
-
-  if (game.hideTime < 3) {
-    $("hideStatus").textContent =
-      "Подожди ещё " + (3 - game.hideTime) + " сек.";
-    return;
-  }
-
-  game.hiding = false;
-  $("hidePanel").classList.add("hidden");
-  say("Ты вылез. Проверь печь!");
-});
-
-// Ночной цикл.
-setInterval(() => {
-  if (!game.started || game.ended) return;
-
-  game.seconds++;
-
-  // Огонь постепенно затухает.
-  game.fire = Math.max(0, game.fire - 0.65);
-
-  if (game.fire <= 0) {
-    endGame(false, "Огонь в печи погас.");
-    return;
-  }
-
-  // Фонарик постепенно разряжается, если включён.
-  if (game.flashlight) {
-    game.battery = Math.max(0, game.battery - 1.5);
-
-    if (game.battery <= 0) {
-      game.flashlight = false;
-      say("Фонарик разрядился!");
-    }
-  }
-
-  // Появление существ.
-  if (!game.hiding && game.seconds % 12 === 0 &&
-      !game.rightEnemy && Math.random() < 0.75) {
-    game.rightEnemy = true;
-    game.rightDanger = 0;
-    game.flashCount = 0;
-    say("ШОРОХ СПРАВА! Проверь проход фонариком.");
-  }
-
-  if (!game.hiding && game.seconds % 17 === 0 &&
-      !game.leftEnemy && Math.random() < 0.65) {
-    game.leftEnemy = true;
-    game.leftDanger = 0;
-    say("ДВИЖЕНИЕ СЛЕВА! Проверь камеру.");
-  }
-
-  if (game.rightEnemy && !game.hiding) {
-    game.rightDanger++;
-
-    if (game.rightDanger >= 15) {
-      endGame(false, "Ты не успел прогнать существо из правого прохода.");
-      return;
-    }
-  }
-
-  if (game.leftEnemy && !game.hiding) {
-    game.leftDanger++;
-
-    if (game.leftDanger >= 22) {
-      endGame(false, "Существо из левого прохода добралось до тебя.");
-      return;
-    }
-  }
-
-  if (game.hiding) {
-    game.hideTime++;
-  }
-
-  // В этой пробной версии 180 секунд равны одной ночи.
-  if (game.seconds >= 180) {
-    endGame(true, "Ты продержался до 6 утра!");
-    return;
-  }
-
-  updateUI();
-}, 1000);
-
-updateUI();
+startGame();
