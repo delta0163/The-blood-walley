@@ -3,597 +3,449 @@
 
 const $ = id => document.getElementById(id);
 
-const office = $("office");
-const flashlight = $("heldFlashlight");
-const batterySlot = $("batterySlot");
-const carriedWood = $("carriedWood");
-const stove = $("stove");
-const cameraPanel = $("cameraPanel");
+const screens = ["menu", "office", "journal", "settings", "result"];
+const officeScene = $("officeScene");
 
-const JOURNAL = {
-  intro: {
-    title: "Запись №001 — Правила",
-    subtitle: "ИНСТРУКЦИЯ ДЕЖУРНОГО",
-    body: `
-      <p>Ты работаешь в старом здании, где ночью нельзя терять бдительность.</p>
-      <h4>Главные правила</h4>
-      <p>Следи за огнём в печке. Когда огонь погаснет, смена будет провалена.</p>
-      <p>Экономь заряд фонаря. Каждая вспышка расходует 5% заряда.</p>
-      <p>Проверяй камеры левого прохода и не забывай про правый проход.</p>
-      <p>Дрова лежат под столом. Возьми полено, повернись к печке и перетащи его на неё.</p>
-    `
-  },
-
-  leftWatcher: {
-    title: "Запись №002 — Смотритель",
-    subtitle: "ЛЕВЫЙ ПРОХОД",
-    body: `
-      <p>Существо, замеченное в левом проходе. Его настоящее имя неизвестно.</p>
-      <h4>Поведение</h4>
-      <p>Оно появляется в темноте и может долго оставаться неподвижным.</p>
-      <h4>Наблюдение</h4>
-      <p>Проверяй CAM 01, CAM 02 и CAM 03. Камеры помогают заметить его присутствие.</p>
-      <h4>Защита</h4>
-      <p>Если существо появилось в проходе, посвети фонарём в его сторону.</p>
-      <p><i>Не все сведения подтверждены.</i></p>
-    `
-  },
-
-  rightStalker: {
-    title: "Запись №003 — Преследователь",
-    subtitle: "ПРАВЫЙ ПРОХОД",
-    body: `
-      <p>Высокая фигура, которую дежурные замечали справа от офиса.</p>
-      <h4>Поведение</h4>
-      <p>Появляется неожиданно. Иногда перед этим слышны тяжёлые шаги.</p>
-      <h4>Защита</h4>
-      <p>Поворачивайся к правому проходу и используй вспышку фонаря.</p>
-      <p>Одна вспышка расходует 5% заряда. Когда заряд закончится, вставь новую батарейку.</p>
-    `
-  },
-
-  fireKeeper: {
-    title: "Запись №004 — Хранитель огня",
-    subtitle: "СТАРЫЕ ДОКУМЕНТЫ",
-    body: `
-      <p>В старых документах упоминается существо, связанное с печью.</p>
-      <h4>Сведения</h4>
-      <p>Его существование пока не подтверждено. Возможно, это всего лишь легенда.</p>
-      <p>Однако огонь действительно важен: не позволяй ему погаснуть.</p>
-      <p><i>В документах есть упоминание о следующей смене, но подробности отсутствуют.</i></p>
-    `
-  },
-
-  unknown: {
-    title: "Запись №005 — Неизвестный",
-    subtitle: "ДАННЫЕ ЗАСЕКРЕЧЕНЫ",
-    body: `
-      <p>В архиве найдено упоминание ещё одного существа.</p>
-      <p>Имя, внешний вид и поведение пока неизвестны.</p>
-      <h4>Условие открытия</h4>
-      <p>Продолжай проходить смены. Возможно, новые наблюдения помогут раскрыть эту запись.</p>
-    `
-  }
-};
-
-const JOURNAL_ORDER = [
-  "intro",
-  "leftWatcher",
-  "rightStalker",
-  "fireKeeper",
-  "unknown"
-];
-
-let currentShift = 1;
-let completedShift = 0;
-let unlockedEntries = ["intro"];
-let seenEnemies = [];
-
+let shift = 1;
 let running = false;
-let gameOver = false;
-let seconds = 0;
+let paused = false;
 let view = "front";
 
-let hasFlashlight = false;
-let flashlightCharge = 100;
-let spareBatteries = 4;
-
-let woodCount = 18;
+let battery = 100;
+let fireLevel = 70;
 let hasWood = false;
-let fireLevel = 100;
+let woodCount = 18;
 
-let leftEnemyPresent = false;
-let rightEnemyPresent = false;
+let elapsed = 0;
+let shiftDuration = 150;
+let lastTick = 0;
+let messageTimeout = null;
 
+let cameraOpen = false;
+let repairOpen = false;
 let selectedCamera = 1;
-let selectedJournalEntry = "intro";
-let lastReportUnlocks = [];
 
-let gameTimer = null;
-let enemyTimer = null;
-let fireTimer = null;
-let beamTimer = null;
-let messageTimer = null;
+let alarmReady = true;
+let alarmBroken = false;
+let alarmActive = false;
+let alarmCooldown = 0;
+let repairTime = 0;
+let alarmDuration = 0;
 
-let swipeStartX = 0;
-let swipeStartY = 0;
-let swipeStarted = false;
+let nemka = {
+  active: false,
+  side: null,
+  danger: 0,
+  moveTimer: 0
+};
+
+let nene = {
+  active: false,
+  danger: 0,
+  moveTimer: 0
+};
 
 let draggingWood = false;
+let dragPointerId = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let dragPointerId = null;
+let gameInterval = null;
+let scareTimeout = null;
+let alarmRepairUsed = false;
 
-let returnScreen = "mainMenu";
+const journal = [
+  {
+    shift: 1,
+    title: "Запись 1 — Правый проход",
+    text: "В проходах иногда появляется Немка. Она не любит яркий свет. Если заметишь её рядом, направь на неё вспышку фонарика. Но не трать батарею без необходимости."
+  },
+  {
+    shift: 2,
+    title: "Запись 2 — Левый проход",
+    text: "Появилась НеНе. Она держится только в левом проходе. Обычная вспышка на неё не действует. Используй сигнализацию через камеры."
+  },
+  {
+    shift: 2,
+    title: "Запись 3 — Сигнализация",
+    text: "Сигнализация не может работать бесконечно. После включения ей требуется время на перезарядку. Иногда она выходит из строя. Тогда открой второй ноутбук и запусти ремонт. На восстановление нужно около двадцати секунд."
+  },
+  {
+    shift: 3,
+    title: "Запись 4 — Наблюдение",
+    text: "Пока доступна только часть записей. Продержись ещё несколько смен, чтобы узнать больше."
+  }
+];
 
-// --------------------
-// СОХРАНЕНИЕ
-// --------------------
+function showScreen(id) {
+  screens.forEach(name => $(name).classList.toggle("active", name === id));
+}
+
+function say(text) {
+  const box = $("message");
+  box.textContent = text;
+  box.classList.add("show");
+
+  clearTimeout(messageTimeout);
+  messageTimeout = setTimeout(() => {
+    box.classList.remove("show");
+  }, 2300);
+}
 
 function saveProgress() {
-  const data = {
-    currentShift,
-    completedShift,
-    unlockedEntries,
-    seenEnemies
-  };
-
   try {
-    localStorage.setItem("valleyBloodSave", JSON.stringify(data));
-  } catch (error) {
-    console.warn("Не удалось сохранить прогресс:", error);
-  }
-
-  updateMenuProgress();
+    localStorage.setItem("valleyBloodSave", JSON.stringify({
+      shift,
+      battery,
+      fireLevel,
+      woodCount
+    }));
+  } catch (e) {}
 }
 
 function loadProgress() {
   try {
-    const raw = localStorage.getItem("valleyBloodSave");
-    if (!raw) return;
+    const data = JSON.parse(localStorage.getItem("valleyBloodSave") || "null");
+    if (!data) return;
 
-    const data = JSON.parse(raw);
-
-    currentShift = Math.max(1, Number(data.currentShift) || 1);
-    completedShift = Math.max(0, Number(data.completedShift) || 0);
-
-    unlockedEntries = Array.isArray(data.unlockedEntries)
-      ? data.unlockedEntries.filter(id => JOURNAL[id])
-      : ["intro"];
-
-    if (!unlockedEntries.includes("intro")) {
-      unlockedEntries.unshift("intro");
-    }
-
-    seenEnemies = Array.isArray(data.seenEnemies)
-      ? data.seenEnemies.filter(id =>
-          id === "leftWatcher" || id === "rightStalker"
-        )
-      : [];
-  } catch (error) {
-    console.warn("Не удалось загрузить сохранение:", error);
-  }
-}
-
-function updateMenuProgress() {
-  $("menuProgress").textContent =
-    `СМЕНА ${currentShift} · ЗАПИСЕЙ: ${unlockedEntries.length}`;
-
-  $("continueButton").disabled = completedShift === 0;
-  $("continueButton").style.opacity =
-    completedShift === 0 ? ".45" : "1";
-}
-
-function unlockEntry(id) {
-  if (!JOURNAL[id] || unlockedEntries.includes(id)) return false;
-
-  unlockedEntries.push(id);
-  lastReportUnlocks.push(id);
-  saveProgress();
-
-  return true;
-}
-
-function unlockEnemyRecord(id) {
-  unlockEntry(id);
-
-  if (!seenEnemies.includes(id)) {
-    seenEnemies.push(id);
-    saveProgress();
-  }
-}
-
-// --------------------
-// ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
-// --------------------
-
-function showScreen(id) {
-  [
-    "mainMenu",
-    "journalScreen",
-    "shiftReport",
-    "settingsScreen",
-    "overlay"
-  ].forEach(screenId => {
-    $(screenId).classList.add("hidden");
-  });
-
-  if (id) $(id).classList.remove("hidden");
-}
-
-function showMainMenu() {
-  stopTimers();
-  running = false;
-  gameOver = false;
-  showScreen("mainMenu");
-  updateMenuProgress();
-}
-
-function showJournal(backTo) {
-  returnScreen = backTo;
-  renderJournal();
-  showScreen("journalScreen");
-}
-
-$("menuJournalButton").addEventListener("click", () => {
-  showJournal("mainMenu");
-});
-
-$("openJournalDuringGame").addEventListener("click", () => {
-  if (!running) return;
-  showJournal("game");
-});
-
-$("closeJournalButton").addEventListener("click", () => {
-  if (returnScreen === "game" && running) {
-    showScreen(null);
-  } else if (returnScreen === "report") {
-    showScreen("shiftReport");
-  } else {
-    showMainMenu();
-  }
-});
-
-// --------------------
-// ЖУРНАЛ
-// --------------------
-
-function renderJournal() {
-  const list = $("journalList");
-  list.replaceChildren();
-
-  JOURNAL_ORDER.forEach((id, index) => {
-    const unlocked = unlockedEntries.includes(id);
-    const entry = JOURNAL[id];
-    const button = document.createElement("button");
-
-    button.className = "journal-item";
-    if (!unlocked) button.classList.add("locked");
-    if (selectedJournalEntry === id) button.classList.add("selected");
-
-    button.textContent = unlocked
-      ? entry.title
-      : `🔒 Запись №${String(index + 1).padStart(3, "0")} — ???`;
-
-    button.addEventListener("click", () => {
-      selectedJournalEntry = id;
-      renderJournal();
-    });
-
-    list.appendChild(button);
-  });
-
-  const entry = JOURNAL[selectedJournalEntry];
-
-  if (unlockedEntries.includes(selectedJournalEntry)) {
-    $("journalEntry").innerHTML = `
-      <div class="menu-subtitle">${entry.subtitle}</div>
-      <h3>${entry.title}</h3>
-      ${entry.body}
-    `;
-  } else {
-    $("journalEntry").innerHTML = `
-      <div class="locked-symbol">?</div>
-      <h3>Запись засекречена</h3>
-      <p>Информация станет доступна после дальнейшего прохождения.</p>
-    `;
-  }
-
-  $("journalCounter").textContent =
-    `Открыто ${unlockedEntries.length} из ${JOURNAL_ORDER.length} записей`;
-}
-
-// --------------------
-// НАСТРОЙКИ
-// --------------------
-
-$("settingsButton").addEventListener("click", () => {
-  showScreen("settingsScreen");
-});
-
-$("closeSettingsButton").addEventListener("click", showMainMenu);
-
-$("resetProgressButton").addEventListener("click", () => {
-  const confirmed = confirm(
-    "Точно сбросить весь прогресс и открыть игру заново?"
-  );
-
-  if (!confirmed) return;
-
-  stopTimers();
-
-  try {
-    localStorage.removeItem("valleyBloodSave");
-  } catch (error) {
-    console.warn(error);
-  }
-
-  currentShift = 1;
-  completedShift = 0;
-  unlockedEntries = ["intro"];
-  seenEnemies = [];
-  selectedJournalEntry = "intro";
-
-  showMainMenu();
-});
-
-// --------------------
-// СООБЩЕНИЯ И ПОКАЗАТЕЛИ
-// --------------------
-
-function notify(text) {
-  $("notice").textContent = text;
-}
-
-function say(text, duration = 1800) {
-  $("message").textContent = text;
-  clearTimeout(messageTimer);
-
-  if (duration > 0) {
-    messageTimer = setTimeout(() => {
-      $("message").textContent = "";
-    }, duration);
-  }
+    shift = Math.max(1, Math.min(13, Number(data.shift) || 1));
+    battery = Number.isFinite(data.battery) ? data.battery : 100;
+    fireLevel = Number.isFinite(data.fireLevel) ? data.fireLevel : 70;
+    woodCount = Number.isFinite(data.woodCount) ? data.woodCount : 18;
+  } catch (e) {}
 }
 
 function updateStatus() {
-  $("fireValue").textContent = `${fireLevel}%`;
-  $("chargeValue").textContent = `${flashlightCharge}%`;
-  $("batteryValue").textContent = spareBatteries;
-  $("woodValue").textContent = woodCount;
+  $("shiftLabel").textContent = "Смена " + shift;
+  $("batteryLabel").textContent = Math.max(0, Math.ceil(battery)) + "%";
+  $("fireLabel").textContent = Math.max(0, Math.ceil(fireLevel)) + "%";
 
-  $("fire").classList.toggle("low", fireLevel <= 35 && fireLevel > 0);
-  $("fire").classList.toggle("out", fireLevel <= 0);
+  const hours = Math.min(6, Math.floor(elapsed / shiftDuration * 6));
+  $("timeLabel").textContent = hours === 0 ? "12 AM" : hours + " AM";
 
-  flashlight.classList.toggle("hidden", !hasFlashlight);
-  batterySlot.classList.toggle(
-    "hidden",
-    !hasFlashlight || spareBatteries <= 0
-  );
+  $("fire").style.opacity = String(Math.max(.15, fireLevel / 100));
+  $("fire").style.filter = `drop-shadow(0 0 ${Math.max(1, fireLevel / 5)}px #ff4d0a)`;
 
-  batterySlot.style.opacity = flashlightCharge <= 0 ? "1" : ".45";
+  $("woodPile").textContent = woodCount > 0
+    ? "🪵 ".repeat(Math.min(4, woodCount))
+    : "Пусто";
 
-  $("flashCharge").classList.toggle("hidden", !hasFlashlight);
-  $("flashChargeFill").style.width = `${flashlightCharge}%`;
+  $("leftEnemy").classList.toggle("visible",
+    nemka.active && nemka.side === "left" || nene.active);
 
-  $("flashChargeFill").style.background =
-    flashlightCharge <= 20 ? "#c33" : "#d4d47a";
+  $("rightEnemy").classList.toggle("visible",
+    nemka.active && nemka.side === "right");
 
-  carriedWood.classList.toggle(
-    "hidden",
-    !hasWood || view !== "back"
-  );
+  $("leftEnemy").classList.toggle("nene", nene.active);
+  $("rightEnemy").classList.remove("nene");
 
-  $("leftEnemy").classList.toggle("visible", leftEnemyPresent);
-  $("rightEnemy").classList.toggle("visible", rightEnemyPresent);
-
-  $("shiftLabel").textContent = `СМЕНА ${currentShift}`;
-
-  updateCameraFeed();
+  updateAlarmUI();
+  updateJournal();
 }
 
-// --------------------
-// ПОВОРОТЫ
-// --------------------
+function updateJournal() {
+  const container = $("journalEntries");
+  container.innerHTML = "";
 
-function turnTo(nextView) {
-  if (!running) return;
+  journal.forEach(entry => {
+    const unlocked = shift >= entry.shift;
+    const article = document.createElement("article");
+    article.className = "journal-entry" + (unlocked ? "" : " locked");
 
+    const heading = document.createElement("strong");
+    heading.textContent = unlocked ? entry.title : "??? — запись закрыта";
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = unlocked
+      ? entry.text
+      : "Информация откроется после прохождения следующих смен.";
+
+    article.append(heading, paragraph);
+    container.appendChild(article);
+  });
+}
+
+function resetEnemies() {
+  nemka = {
+    active: false,
+    side: null,
+    danger: 0,
+    moveTimer: 7 + Math.random() * 7
+  };
+
+  nene = {
+    active: false,
+    danger: 0,
+    moveTimer: 13 + Math.random() * 7
+  };
+}
+
+function startShift() {
+  clearInterval(gameInterval);
+  clearTimeout(scareTimeout);
+
+  running = true;
+  paused = false;
+  elapsed = 0;
+  lastTick = Date.now();
+
+  battery = 100;
+  fireLevel = 70;
+  hasWood = false;
+
+  alarmReady = true;
+  alarmBroken = false;
+  alarmActive = false;
+  alarmCooldown = 0;
+  repairTime = 0;
+  alarmDuration = 0;
+  alarmRepairUsed = false;
+
+  cameraOpen = false;
+  repairOpen = false;
+
+  $("cameraPanel").classList.add("hidden");
+  $("repairPanel").classList.add("hidden");
+  $("pausePanel").classList.add("hidden");
+  $("jumpscare").classList.add("hidden");
+  $("carriedWood").style.display = "none";
+
+  resetEnemies();
+  setView("front");
+  showScreen("office");
+  updateStatus();
+
+  say("Смена " + shift + ". Продержись до 6 AM.");
+
+  gameInterval = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (!running || paused) return;
+
+  elapsed++;
+
+  // Немка может появиться в любом из двух проходов.
+  nemka.moveTimer--;
+
+  if (nemka.moveTimer <= 0) {
+    if (!nemka.active) {
+      nemka.active = true;
+      nemka.side = Math.random() < .5 ? "left" : "right";
+      nemka.danger = 0;
+      say("Ты слышишь шаги в одном из проходов...");
+    } else {
+      // Если Немка уже появилась, она приближается.
+      nemka.danger += 1;
+
+      if (nemka.danger >= 9) {
+        loseGame("НЕМКА");
+        return;
+      }
+    }
+
+    nemka.moveTimer = nemka.active
+      ? 4 + Math.random() * 3
+      : 8 + Math.random() * 7;
+  }
+
+  // НеНе появляется только со второй смены и только слева.
+  if (shift >= 2) {
+    nene.moveTimer--;
+
+    if (nene.moveTimer <= 0) {
+      if (!nene.active) {
+        nene.active = true;
+        nene.danger = 0;
+        say("Слева раздался странный звук. Проверь камеры!");
+      } else {
+        nene.danger++;
+
+        if (nene.danger >= 8) {
+          loseGame("НЕНЕ");
+          return;
+        }
+      }
+
+      nene.moveTimer = nene.active
+        ? 4
+        : 12 + Math.random() * 10;
+    }
+  }
+
+  // Фонарь расходует батарею понемногу.
+  battery = Math.max(0, battery - .08);
+
+  // Огонь постепенно гаснет.
+  fireLevel = Math.max(0, fireLevel - .11);
+
+  if (fireLevel <= 0) {
+    say("Огонь почти погас! Возьми дрова и добавь их в печку.");
+  }
+
+  if (alarmCooldown > 0) {
+    alarmCooldown--;
+    if (alarmCooldown <= 0 && !alarmBroken) {
+      alarmReady = true;
+    }
+  }
+
+  if (alarmDuration > 0) {
+    alarmDuration--;
+    if (alarmDuration <= 0) {
+      alarmActive = false;
+      say("Сигнализация закончила работу.");
+    }
+  }
+
+  // Починка занимает ровно 20 игровых секунд.
+  if (repairTime > 0) {
+    repairTime--;
+
+    const percent = ((20 - repairTime) / 20) * 100;
+    $("repairProgress").style.width = percent + "%";
+
+    if (repairTime <= 0) {
+      alarmBroken = false;
+      alarmReady = true;
+      alarmCooldown = 0;
+      alarmRepairUsed = false;
+      say("Сигнализация восстановлена!");
+    }
+  }
+
+  // Сигнализация отгоняет НеНе, если она активна.
+  if (alarmActive && nene.active) {
+    nene.active = false;
+    nene.danger = 0;
+    nene.moveTimer = 15 + Math.random() * 8;
+    say("Сигнализация отпугнула НеНе!");
+  }
+
+  // Если НеНе долго остаётся рядом, сигнализация может сломаться.
+  if (nene.active && nene.danger >= 4 && !alarmActive && !alarmBroken) {
+    if (Math.random() < .08) {
+      alarmBroken = true;
+      alarmReady = false;
+      say("Сигнализация вышла из строя! Открой второй ноутбук.");
+    }
+  }
+
+  if (elapsed >= shiftDuration) {
+    winShift();
+    return;
+  }
+
+  updateStatus();
+}
+
+function setView(nextView) {
   view = nextView;
-  office.className = `office ${view}`;
+  officeScene.className = "office-scene view-" + nextView;
+  $("carriedWood").style.display = hasWood ? "block" : "none";
 
-  if (view === "front") {
-    notify("Офис. Фонарик и батарейки лежат на столе.");
-  } else if (view === "left") {
-    notify("Левый проход. Проверь его и камеры.");
-  } else if (view === "right") {
-    notify("Правый проход. Используй фонарик.");
+  if (hasWood && !draggingWood) {
+    $("carriedWood").style.left = "10%";
+    $("carriedWood").style.top = "50%";
+  }
+}
+
+function flashlight() {
+  if (!running || paused) return;
+
+  if (battery <= 0) {
+    say("Батарея разряжена!");
+    return;
+  }
+
+  if (view !== "left" && view !== "right") {
+    say("Направь фонарь в один из проходов.");
+    return;
+  }
+
+  battery = Math.max(0, battery - 8);
+
+  const flash = $("flashEffect");
+  flash.classList.remove("flash");
+  void flash.offsetWidth;
+  flash.classList.add("flash");
+
+  const nemkaInView = nemka.active && nemka.side === view;
+
+  if (nemkaInView) {
+    nemka.active = false;
+    nemka.side = null;
+    nemka.danger = 0;
+    nemka.moveTimer = 10 + Math.random() * 8;
+    say("Немка отступила от яркого света.");
+  } else if (nene.active && view === "left") {
+    say("НеНе не боится фонарика! Используй сигнализацию.");
   } else {
-    notify("Печь. Перетащи полено прямо на неё.");
+    say("Вспышка осветила проход.");
   }
 
   updateStatus();
 }
 
-$("turnLeft").addEventListener("click", () => {
-  if (view === "front") turnTo("left");
-  else if (view === "left") turnTo("back");
-  else if (view === "back") turnTo("right");
-  else turnTo("front");
-});
+function takeWood() {
+  if (!running || paused) return;
 
-$("turnRight").addEventListener("click", () => {
-  if (view === "front") turnTo("right");
-  else if (view === "right") turnTo("back");
-  else if (view === "back") turnTo("left");
-  else turnTo("front");
-});
-
-$("turnFront").addEventListener("click", () => turnTo("front"));
-$("turnBack").addEventListener("click", () => turnTo("back"));
-
-office.addEventListener("pointerdown", event => {
-  if (!running) return;
-  if (event.target.closest("button")) return;
-  if (event.target.closest("#cameraPanel")) return;
-
-  swipeStartX = event.clientX;
-  swipeStartY = event.clientY;
-  swipeStarted = true;
-});
-
-office.addEventListener("pointerup", event => {
-  if (!swipeStarted || !running) return;
-  swipeStarted = false;
-
-  const dx = event.clientX - swipeStartX;
-  const dy = event.clientY - swipeStartY;
-
-  if (Math.abs(dx) < 35 || Math.abs(dx) < Math.abs(dy)) return;
-
-  if (dx < 0) turnTo("right");
-  else turnTo("left");
-});
-
-office.addEventListener("pointercancel", () => {
-  swipeStarted = false;
-});
-
-// --------------------
-// ФОНАРИК
-// --------------------
-
-$("flashlightItem").addEventListener("click", () => {
-  if (!running || hasFlashlight || view !== "front") return;
-
-  hasFlashlight = true;
-  flashlightCharge = 100;
-
-  $("flashlightItem").classList.add("taken");
-
-  say("Ты взял фонарик.");
-  updateStatus();
-});
-
-$("batteryItem").addEventListener("click", () => {
-  if (!running || view !== "front") return;
-
-  if ($("batteryItem").classList.contains("taken")) return;
-
-  spareBatteries = 4;
-  $("batteryItem").classList.add("taken");
-
-  say("Ты забрал четыре запасные батарейки.");
-  updateStatus();
-});
-
-flashlight.addEventListener("click", () => {
-  if (!running || !hasFlashlight) return;
-
-  if (view !== "right" && view !== "left") {
-    say("Сначала повернись к одному из проходов.");
+  if (view !== "back") {
+    say("Сначала повернись к печке.");
     return;
   }
 
-  if (flashlightCharge <= 0) {
-    say("Фонарик разряжен. Нажми на значок батарейки.");
+  if (hasWood) {
+    say("Ты уже держишь полено.");
     return;
   }
 
-  flashlightCharge = Math.max(0, flashlightCharge - 5);
-  $("flashBeam").classList.add("active");
-
-  if (view === "right" && rightEnemyPresent) {
-    rightEnemyPresent = false;
-    say("Свет отпугнул Преследователя!");
-  } else if (view === "left" && leftEnemyPresent) {
-    leftEnemyPresent = false;
-    say("Существо отступило в темноту!");
-  } else {
-    say("В проходе никого не видно.");
+  if (woodCount <= 0) {
+    say("Дров больше нет.");
+    return;
   }
 
+  hasWood = true;
+  woodCount--;
+
+  const wood = $("carriedWood");
+  wood.style.display = "block";
+  wood.style.left = "10%";
+  wood.style.top = "50%";
+
+  say("Перетащи полено на печку.");
   updateStatus();
-
-  clearTimeout(beamTimer);
-  beamTimer = setTimeout(() => {
-    $("flashBeam").classList.remove("active");
-  }, 850);
-});
-
-batterySlot.addEventListener("click", () => {
-  if (!running || !hasFlashlight) return;
-
-  if (flashlightCharge > 0) {
-    say("Батарейку можно заменить, когда заряд закончится.");
-    return;
-  }
-
-  if (spareBatteries <= 0) {
-    say("Запасные батарейки закончились!");
-    return;
-  }
-
-  spareBatteries--;
-  flashlightCharge = 100;
-
-  say(`Батарейка заменена. Осталось: ${spareBatteries}.`);
-  updateStatus();
-});
-
-// --------------------
-// ДРОВА
-// --------------------
-
-function resetWoodPile() {
-  document.querySelectorAll(".log").forEach(log => {
-    log.classList.remove("taken");
-  });
 }
 
-document.querySelectorAll(".log").forEach(log => {
-  log.addEventListener("click", () => {
-    if (!running) return;
+function rectsOverlap(a, b) {
+  return a.left < b.right &&
+         a.right > b.left &&
+         a.top < b.bottom &&
+         a.bottom > b.top;
+}
 
-    if (view !== "front") {
-      say("Повернись прямо к столу, чтобы взять дрова.");
-      return;
-    }
+function resetDraggedWood() {
+  draggingWood = false;
+  dragPointerId = null;
+  $("carriedWood").classList.remove("dragging");
+}
 
-    if (hasWood) {
-      say("Ты уже держишь полено.");
-      return;
-    }
-
-    if (woodCount <= 0) {
-      say("Дров больше нет!");
-      return;
-    }
-
-    hasWood = true;
-    woodCount--;
-
-    log.classList.add("taken");
-
-    say("Ты взял полено. Повернись к печке.");
-    updateStatus();
-  });
-});
+const carriedWood = $("carriedWood");
 
 carriedWood.addEventListener("pointerdown", event => {
-  if (!running || !hasWood || view !== "back") return;
+  if (!running || paused || !hasWood || view !== "back") return;
 
   draggingWood = true;
   dragPointerId = event.pointerId;
 
   const rect = carriedWood.getBoundingClientRect();
-
   dragOffsetX = event.clientX - rect.left;
   dragOffsetY = event.clientY - rect.top;
 
   carriedWood.classList.add("dragging");
-  carriedWood.setPointerCapture(event.pointerId);
-  stove.classList.add("drop-ready");
+
+  try {
+    carriedWood.setPointerCapture(event.pointerId);
+  } catch (e) {}
 
   event.preventDefault();
 });
@@ -601,306 +453,397 @@ carriedWood.addEventListener("pointerdown", event => {
 carriedWood.addEventListener("pointermove", event => {
   if (!draggingWood || event.pointerId !== dragPointerId) return;
 
-  const rect = office.getBoundingClientRect();
+  const sceneRect = officeScene.getBoundingClientRect();
 
-  carriedWood.style.left =
-    `${event.clientX - rect.left - dragOffsetX}px`;
+  const x = event.clientX - sceneRect.left - dragOffsetX;
+  const y = event.clientY - sceneRect.top - dragOffsetY;
 
-  carriedWood.style.top =
-    `${event.clientY - rect.top - dragOffsetY}px`;
-
-  carriedWood.style.bottom = "auto";
+  carriedWood.style.left = x + "px";
+  carriedWood.style.top = y + "px";
+  event.preventDefault();
 });
-
-function resetDraggedWood() {
-  draggingWood = false;
-  dragPointerId = null;
-
-  carriedWood.classList.remove("dragging");
-  stove.classList.remove("drop-ready");
-
-  carriedWood.style.left = "";
-  carriedWood.style.top = "";
-  carriedWood.style.bottom = "";
-}
 
 carriedWood.addEventListener("pointerup", event => {
   if (!draggingWood || event.pointerId !== dragPointerId) return;
 
-  const target = document.elementFromPoint(
-    event.clientX,
-    event.clientY
-  );
+  const stoveRect = $("stove").getBoundingClientRect();
+  const fireRect = $("fire").getBoundingClientRect();
+  const woodRect = carriedWood.getBoundingClientRect();
 
-  const droppedOnStove = target &&
-    (target.closest("#stove") || target.closest("#fire"));
+  // Проверяем пересечение всего полена с печкой, а не только точку пальца.
+  const stoveTarget = {
+    left: stoveRect.left - 45,
+    right: stoveRect.right + 45,
+    top: stoveRect.top - 45,
+    bottom: stoveRect.bottom + 45
+  };
+
+  const fireTarget = {
+    left: fireRect.left - 45,
+    right: fireRect.right + 45,
+    top: fireRect.top - 45,
+    bottom: fireRect.bottom + 45
+  };
+
+  const droppedOnStove =
+    rectsOverlap(woodRect, stoveTarget) ||
+    rectsOverlap(woodRect, fireTarget);
 
   resetDraggedWood();
 
-  if (droppedOnStove && view === "back" && hasWood) {
+  if (running && hasWood && view === "back" && droppedOnStove) {
     hasWood = false;
-    fireLevel = Math.min(100, fireLevel + 55);
-
-    say("Полено добавлено в печку. Огонь усилился!");
+    carriedWood.style.display = "none";
+    fireLevel = Math.min(100, fireLevel + 45);
+    say("Полено попало в печку! Огонь усилился.");
     updateStatus();
+  } else if (view !== "back") {
+    carriedWood.style.left = "10%";
+    carriedWood.style.top = "50%";
+    say("Сначала повернись к печке.");
   } else {
-    say("Перетащи полено прямо на печку.");
+    carriedWood.style.left = "10%";
+    carriedWood.style.top = "50%";
+    say("Отпусти полено на большую область печки.");
+  }
+
+  event.preventDefault();
+});
+
+carriedWood.addEventListener("pointercancel", () => {
+  resetDraggedWood();
+  if (hasWood) {
+    carriedWood.style.left = "10%";
+    carriedWood.style.top = "50%";
   }
 });
 
-carriedWood.addEventListener("pointercancel", resetDraggedWood);
+function openCameras() {
+  if (!running || paused) return;
 
-// --------------------
-// КАМЕРЫ
-// --------------------
+  cameraOpen = true;
+  repairOpen = false;
 
-$("openCameras").addEventListener("click", () => {
+  $("repairPanel").classList.add("hidden");
+  $("cameraPanel").classList.remove("hidden");
+  updateCameraFeed();
+  updateAlarmUI();
+}
+
+function closeCameras() {
+  cameraOpen = false;
+  $("cameraPanel").classList.add("hidden");
+}
+
+function updateCameraFeed() {
+  const descriptions = {
+    1: "КАМЕРА 01 — ГЛАВНЫЙ КОРИДОР",
+    2: "КАМЕРА 02 — ЛЕВЫЙ ПРОХОД",
+    3: "КАМЕРА 03 — ПРАВЫЙ ПРОХОД",
+    4: "КАМЕРА 04 — КОМНАТА С ПЕЧКОЙ"
+  };
+
+  $("cameraFeedText").textContent = descriptions[selectedCamera];
+
+  let enemyText = "";
+
+  if (selectedCamera === 2 && nene.active) {
+    enemyText = "👁️";
+  } else if (selectedCamera === 2 && nemka.active && nemka.side === "left") {
+    enemyText = "☠️";
+  } else if (selectedCamera === 3 && nemka.active && nemka.side === "right") {
+    enemyText = "☠️";
+  } else if (selectedCamera === 4 && fireLevel < 30) {
+    enemyText = "🔥";
+  }
+
+  $("cameraEnemy").textContent = enemyText;
+
+  document.querySelectorAll(".camera-tile").forEach(button => {
+    button.classList.toggle(
+      "selected",
+      Number(button.dataset.camera) === selectedCamera
+    );
+  });
+}
+
+function updateAlarmUI() {
+  const button = $("alarmButton");
+  const status = $("alarmStatus");
+  const hint = $("alarmHint");
+
+  if (alarmBroken) {
+    status.textContent = repairTime > 0 ? "РЕМОНТ" : "СЛОМАНА";
+    button.textContent = "СИГНАЛИЗАЦИЯ НЕ РАБОТАЕТ";
+    button.className = "broken";
+    button.disabled = true;
+    hint.textContent = "Открой второй ноутбук и запусти ремонт.";
+  } else if (repairTime > 0) {
+    status.textContent = "РЕМОНТ";
+    button.textContent = "ИДЁТ РЕМОНТ";
+    button.className = "broken";
+    button.disabled = true;
+    hint.textContent = "Подожди завершения ремонта.";
+  } else if (alarmActive) {
+    status.textContent = "РАБОТАЕТ";
+    button.textContent = "СИГНАЛИЗАЦИЯ ВКЛЮЧЕНА";
+    button.className = "active-alarm";
+    button.disabled = true;
+    hint.textContent = "Сигнализация отпугивает НеНе.";
+  } else if (alarmCooldown > 0) {
+    status.textContent = "ПЕРЕЗАРЯДКА";
+    button.textContent = "ПЕРЕЗАРЯДКА: " + alarmCooldown + " сек.";
+    button.className = "recharging";
+    button.disabled = true;
+    hint.textContent = "Дождись окончания перезарядки.";
+  } else {
+    status.textContent = "ГОТОВА";
+    button.textContent = "ВКЛЮЧИТЬ СИГНАЛИЗАЦИЮ";
+    button.className = "";
+    button.disabled = false;
+    hint.textContent = "Отпугивает НеНе в левом проходе.";
+  }
+
+  $("repairStatus").textContent = alarmBroken
+    ? (repairTime > 0 ? "Состояние: идёт ремонт" : "Состояние: сломана")
+    : "Состояние: исправна";
+
+  $("startRepairButton").disabled = !alarmBroken || repairTime > 0;
+}
+
+function activateAlarm() {
+  if (!running || paused || !cameraOpen) return;
+
+  if (alarmBroken || repairTime > 0) {
+    say("Сигнализация неисправна. Нужен ремонт.");
+    return;
+  }
+
+  if (!alarmReady || alarmCooldown > 0 || alarmActive) {
+    say("Сигнализация пока не готова.");
+    return;
+  }
+
+  alarmReady = false;
+  alarmActive = true;
+  alarmDuration = 4;
+  alarmCooldown = 12;
+
+  // НеНе отступает сразу после сигнала.
+  if (nene.active) {
+    nene.active = false;
+    nene.danger = 0;
+    nene.moveTimer = 15 + Math.random() * 7;
+    say("Сигнализация сработала! НеНе отступила.");
+  } else {
+    say("Сигнализация включена.");
+  }
+
+  updateStatus();
+}
+
+function openRepair() {
+  if (!running || paused) return;
+
+  repairOpen = true;
+  cameraOpen = false;
+
+  $("cameraPanel").classList.add("hidden");
+  $("repairPanel").classList.remove("hidden");
+  updateAlarmUI();
+}
+
+function closeRepair() {
+  repairOpen = false;
+  $("repairPanel").classList.add("hidden");
+}
+
+function startRepair() {
+  if (!running || paused) return;
+
+  if (!alarmBroken) {
+    say("Сигнализация исправна, ремонт не требуется.");
+    return;
+  }
+
+  if (repairTime > 0) {
+    say("Ремонт уже идёт.");
+    return;
+  }
+
+  alarmActive = false;
+  alarmReady = false;
+  alarmCooldown = 0;
+  repairTime = 20;
+  alarmRepairUsed = true;
+
+  $("repairProgress").style.width = "0%";
+  say("Ремонт запущен. Нужно подождать 20 секунд.");
+  updateAlarmUI();
+}
+
+function loseGame(enemyName) {
   if (!running) return;
 
-  cameraPanel.classList.remove("hidden");
-  updateCameraFeed();
+  running = false;
+  clearInterval(gameInterval);
+
+  $("scareName").textContent = enemyName;
+  $("jumpscare").classList.remove("hidden");
+
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 60, 180, 60, 250]);
+  }
+
+  scareTimeout = setTimeout(() => {
+    $("jumpscare").classList.add("hidden");
+
+    $("resultTitle").textContent = "ТЫ ПРОИГРАЛ";
+    $("resultText").textContent =
+      enemyName + " добралась до офиса. Попробуй ещё раз и следи за проходами.";
+    $("resultContinue").textContent = "Повторить смену";
+    showScreen("result");
+  }, 1800);
+}
+
+function winShift() {
+  running = false;
+  clearInterval(gameInterval);
+
+  const completedShift = shift;
+  shift = Math.min(13, shift + 1);
+  saveProgress();
+
+  $("resultTitle").textContent = "6 AM — СМЕНА ЗАВЕРШЕНА";
+  $("resultText").textContent = completedShift >= 13
+    ? "Ты пережил все смены. Но что-то всё ещё наблюдает за тобой..."
+    : "Ты пережил смену " + completedShift + ". В следующую ночь появятся новые опасности.";
+
+  $("resultContinue").textContent = completedShift >= 13
+    ? "Начать заново"
+    : "Следующая смена";
+
+  showScreen("result");
+}
+
+function continueFromResult() {
+  if (shift > 13) shift = 1;
+
+  if (shift >= 14) {
+    shift = 1;
+  }
+
+  startShift();
+}
+
+function pauseGame() {
+  if (!running) return;
+
+  paused = true;
+  $("pausePanel").classList.remove("hidden");
+}
+
+function resumeGame() {
+  paused = false;
+  $("pausePanel").classList.add("hidden");
+  lastTick = Date.now();
+}
+
+function returnToMenu() {
+  running = false;
+  paused = false;
+  clearInterval(gameInterval);
+  clearTimeout(scareTimeout);
+
+  $("pausePanel").classList.add("hidden");
+  $("cameraPanel").classList.add("hidden");
+  $("repairPanel").classList.add("hidden");
+  $("jumpscare").classList.add("hidden");
+
+  saveProgress();
+  showScreen("menu");
+}
+
+$("newGame").addEventListener("click", () => {
+  shift = 1;
+  woodCount = 18;
+  saveProgress();
+  startShift();
 });
 
-$("closeCameras").addEventListener("click", () => {
-  cameraPanel.classList.add("hidden");
+$("continueGame").addEventListener("click", () => {
+  loadProgress();
+  startShift();
 });
 
-document.querySelectorAll("[data-camera]").forEach(button => {
+$("openJournal").addEventListener("click", () => {
+  updateJournal();
+  showScreen("journal");
+});
+
+$("openSettings").addEventListener("click", () => showScreen("settings"));
+$("journalBack").addEventListener("click", () => showScreen("menu"));
+$("settingsBack").addEventListener("click", () => showScreen("menu"));
+
+$("lookLeft").addEventListener("click", () => {
+  if (running && !paused) setView("left");
+});
+
+$("lookRight").addEventListener("click", () => {
+  if (running && !paused) setView("right");
+});
+
+$("lookFront").addEventListener("click", () => {
+  if (running && !paused) setView("front");
+});
+
+$("lookBack").addEventListener("click", () => {
+  if (running && !paused) setView("back");
+});
+
+$("flashlightButton").addEventListener("click", flashlight);
+$("takeWoodButton").addEventListener("click", takeWood);
+$("cameraButton").addEventListener("click", openCameras);
+$("camerasButton").addEventListener("click", openCameras);
+$("closeCameras").addEventListener("click", closeCameras);
+
+$("repairLaptopButton").addEventListener("click", openRepair);
+$("closeRepair").addEventListener("click", closeRepair);
+$("startRepairButton").addEventListener("click", startRepair);
+
+$("alarmButton").addEventListener("click", activateAlarm);
+
+document.querySelectorAll(".camera-tile").forEach(button => {
   button.addEventListener("click", () => {
     selectedCamera = Number(button.dataset.camera);
-
-    document.querySelectorAll("[data-camera]").forEach(item => {
-      item.classList.toggle("selected", item === button);
-    });
-
     updateCameraFeed();
   });
 });
 
-function updateCameraFeed() {
-  const scene = $("cameraScene");
+$("pauseButton").addEventListener("click", pauseGame);
+$("resumeButton").addEventListener("click", resumeGame);
+$("quitButton").addEventListener("click", returnToMenu);
 
-  scene.classList.toggle("cam2", selectedCamera === 2);
-  scene.classList.toggle("cam3", selectedCamera === 3);
-
-  const labels = {
-    1: "CAM 01 — ВХОД В ЛЕВЫЙ ПРОХОД",
-    2: "CAM 02 — СЕРЕДИНА ПРОХОДА",
-    3: "CAM 03 — ДАЛЬНИЙ УГОЛ"
-  };
-
-  $("cameraLabel").textContent = labels[selectedCamera];
-
-  $("cameraEnemy").classList.toggle(
-    "hidden",
-    !leftEnemyPresent
-  );
-}
-
-// --------------------
-// ПРОТИВНИКИ
-// --------------------
-
-function spawnEnemy() {
-  if (!running || gameOver) return;
-
-  if (!rightEnemyPresent && Math.random() < 0.5) {
-    rightEnemyPresent = true;
-    unlockEnemyRecord("rightStalker");
-    notify("Справа слышны тяжёлые шаги...");
+$("resultContinue").addEventListener("click", () => {
+  if (shift > 13) {
+    shift = 1;
+    woodCount = 18;
   }
-
-  if (!leftEnemyPresent && Math.random() < 0.5) {
-    leftEnemyPresent = true;
-    unlockEnemyRecord("leftWatcher");
-    notify("Что-то движется в левом проходе...");
-  }
-
-  updateStatus();
-}
-
-// --------------------
-// ЗАПУСК И ЗАВЕРШЕНИЕ СМЕНЫ
-// --------------------
-
-function stopTimers() {
-  clearInterval(gameTimer);
-  clearInterval(enemyTimer);
-  clearInterval(fireTimer);
-
-  clearTimeout(beamTimer);
-  clearTimeout(messageTimer);
-
-  gameTimer = null;
-  enemyTimer = null;
-  fireTimer = null;
-}
-
-function startShift(shiftNumber) {
-  stopTimers();
-
-  currentShift = Math.max(1, shiftNumber);
-  seconds = 0;
-
-  running = true;
-  gameOver = false;
-
-  hasFlashlight = false;
-  flashlightCharge = 100;
-  spareBatteries = 4;
-
-  woodCount = 18;
-  hasWood = false;
-  fireLevel = 100;
-
-  leftEnemyPresent = false;
-  rightEnemyPresent = false;
-
-  view = "front";
-  selectedCamera = 1;
-  lastReportUnlocks = [];
-
-  $("flashlightItem").classList.remove("taken");
-  $("batteryItem").classList.remove("taken");
-  $("flashBeam").classList.remove("active");
-  cameraPanel.classList.add("hidden");
-
-  resetWoodPile();
-  resetDraggedWood();
-
-  $("clock").textContent = "12 AM";
-  $("shiftLabel").textContent = `СМЕНА ${currentShift}`;
-
-  $("overlay").classList.add("hidden");
-  showScreen(null);
-
-  office.className = "office front";
-  notify(`Смена ${currentShift} началась. Доживи до 6 AM.`);
-  say("Следи за огнём и проверяй проходы.", 3000);
-
-  saveProgress();
-  updateStatus();
-
-  gameTimer = setInterval(() => {
-    if (!running || gameOver) return;
-
-    seconds++;
-
-    const gameHour = Math.min(6, Math.floor(seconds / 30));
-
-    $("clock").textContent =
-      gameHour === 0 ? "12 AM" : `${gameHour} AM`;
-
-    if (seconds >= 180) {
-      finishShift();
-    }
-  }, 1000);
-
-  enemyTimer = setInterval(spawnEnemy, 10000);
-
-  fireTimer = setInterval(() => {
-    if (!running || gameOver) return;
-
-    fireLevel = Math.max(0, fireLevel - 2);
-    updateStatus();
-
-    if (fireLevel <= 0) {
-      finishShift(false);
-    } else if (fireLevel <= 20) {
-      notify("Огонь почти погас! Срочно принеси дрова.");
-    }
-  }, 4000);
-}
-
-function finishShift(won = true) {
-  if (!running || gameOver) return;
-
-  stopTimers();
-  running = false;
-  gameOver = true;
-
-  if (!won) {
-    $("overlayTitle").textContent = "СМЕНА ПРОВАЛЕНА";
-    $("overlayText").textContent =
-      "Огонь погас. Ты не смог пережить эту смену.";
-
-    showScreen("overlay");
-    return;
-  }
-
-  completedShift = Math.max(completedShift, currentShift);
-
-  if (currentShift >= 1) {
-    unlockEntry("fireKeeper");
-  }
-
-  if (currentShift >= 2) {
-    unlockEntry("unknown");
-  }
-
-  currentShift = completedShift + 1;
-  saveProgress();
-
-  $("reportTitle").textContent = "6 AM";
-  $("reportText").textContent =
-    `Смена ${completedShift} завершена. Ты пережил ещё одну ночь.`;
-
-  if (lastReportUnlocks.length) {
-    $("reportUnlocks").innerHTML = lastReportUnlocks
-      .map(id => `• ${JOURNAL[id].title}`)
-      .join("<br>");
-  } else {
-    $("reportUnlocks").textContent =
-      "Новых записей в этот раз нет.";
-  }
-
-  $("nextShiftButton").textContent =
-    `НАЧАТЬ СМЕНУ ${currentShift}`;
-
-  showScreen("shiftReport");
-}
-
-$("newGameButton").addEventListener("click", () => {
-  currentShift = 1;
-  completedShift = 0;
-  unlockedEntries = ["intro"];
-  seenEnemies = [];
-  selectedJournalEntry = "intro";
-
-  saveProgress();
-  startShift(1);
+  startShift();
 });
 
-$("continueButton").addEventListener("click", () => {
-  if (completedShift <= 0) {
-    say("Сначала пройди первую смену.");
-    return;
-  }
+$("resultMenu").addEventListener("click", returnToMenu);
 
-  startShift(currentShift);
+$("shiftLength").addEventListener("change", event => {
+  shiftDuration = Number(event.target.value) || 150;
 });
 
-$("nextShiftButton").addEventListener("click", () => {
-  startShift(currentShift);
+$("volumeSetting").addEventListener("input", event => {
+  // Уровень звука можно подключить к аудиоэффектам позже.
+  event.target.title = "Громкость: " + event.target.value + "%";
 });
-
-$("reportJournalButton").addEventListener("click", () => {
-  showJournal("report");
-});
-
-$("reportMenuButton").addEventListener("click", showMainMenu);
-
-$("restart").addEventListener("click", () => {
-  startShift(currentShift);
-});
-
-$("defeatMenuButton").addEventListener("click", showMainMenu);
-
-// --------------------
-// ПЕРВЫЙ ЗАПУСК
-// --------------------
 
 loadProgress();
-updateMenuProgress();
-renderJournal();
-showMainMenu();
+updateJournal();
+updateStatus();
+showScreen("menu");
