@@ -205,8 +205,6 @@ h1 span {
   filter: drop-shadow(0 0 9px #b735a0);
 }
 
-/* Центральное окно и Тилл / Дельта */
-
 .delta-window {
   position: absolute;
   left: 35%;
@@ -245,8 +243,6 @@ h1 span {
 .delta-silhouette.visible {
   opacity: 1;
 }
-
-/* Комната с печкой */
 
 .back-room {
   position: absolute;
@@ -352,8 +348,6 @@ h1 span {
   border-color: #c78b65;
 }
 
-/* Стол */
-
 .desk {
   position: absolute;
   bottom: -3%;
@@ -408,6 +402,10 @@ h1 span {
   cursor: grab;
 }
 
+#carriedWood.dragging {
+  cursor: grabbing;
+}
+
 #flashEffect {
   position: absolute;
   inset: 0;
@@ -425,8 +423,6 @@ h1 span {
   from { opacity: .95; }
   to { opacity: 0; }
 }
-
-/* Нижние кнопки */
 
 .bottom-controls {
   z-index: 4;
@@ -450,8 +446,6 @@ h1 span {
   font-size: 11px;
   padding: 8px;
 }
-
-/* Камеры, ремонт и пауза */
 
 .panel {
   position: absolute;
@@ -545,8 +539,6 @@ h1 span {
   opacity: 1;
 }
 
-/* Журнал и настройки */
-
 #journalEntries {
   width: min(700px, 100%);
   max-height: 65%;
@@ -571,14 +563,47 @@ h1 span {
   opacity: .5;
 }
 
+#settings {
+  overflow-y: auto;
+  padding: 20px 12px;
+}
+
 #settings label {
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: min(440px, 100%);
   padding: 14px;
 }
 
-/* Экран проигрыша */
+#settings select {
+  max-width: 100%;
+}
+
+#fullscreenButton {
+  margin: 12px;
+  min-height: 44px;
+  background: #63251e;
+  border-color: #c78b65;
+}
+
+#game:fullscreen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  background: #080909;
+}
+
+#game:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  background: #080909;
+}
 
 #jumpscare {
   position: absolute;
@@ -631,8 +656,6 @@ h1 span {
   background: #090707;
   border: 3px solid #7c2522;
 }
-
-/* Прицеливание дробовика */
 
 .aim-panel {
   position: absolute;
@@ -748,6 +771,13 @@ h1 span {
 
   #game {
     display: none;
+  }
+}
+
+@media (orientation: landscape) {
+  #game {
+    width: 100%;
+    height: 100%;
   }
 }
 
