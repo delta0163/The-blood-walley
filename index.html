@@ -4,10 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#080909">
   <title>The Valley of Blood</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="rotateNotice">
+    <div class="rotate-icon">↻</div>
+    <h2>ПОВЕРНИ ТЕЛЕФОН</h2>
+    <p>Игра работает в горизонтальном режиме</p>
+  </div>
+
   <main id="game">
     <header class="topbar">
       <div class="logo">THE VALLEY OF BLOOD</div>
@@ -44,40 +51,83 @@
             </div>
           </div>
         </div>
-        <div class="back-label">ПЕЧКА — ПЕРЕТАЩИ ДРОВА СЮДА</div>
+        <div class="back-label">ПЕРЕТАЩИ ДРОВА В ПЕЧКУ</div>
       </div>
 
       <div class="desk">
         <div class="desk-top">
           <button id="flashlightItem" class="item flashlight-item">
-            <span class="flashlight-icon">🔦</span>
-            <span>Фонарик</span>
+            🔦 <span>Фонарик</span>
           </button>
           <button id="batteryItem" class="item battery-item">
-            <span class="battery-icon">🔋</span>
-            <span>4 батарейки</span>
-          </button>
-          <button id="woodItem" class="item wood-item">
-            <span class="wood-icon">🪵</span>
-            <span>Дрова</span>
+            🔋 <span>Забрать батарейки</span>
           </button>
           <div class="paper">ЖУРНАЛ<br>СМЕНЫ</div>
           <div class="mug">☕</div>
         </div>
+
         <div class="desk-front"></div>
+
+        <div class="wood-storage">
+          <div class="wood-storage-label">ЗАПАС ДРОВ</div>
+          <div id="woodPile" class="wood-pile">
+            <button class="log" data-log="1" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="2" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="3" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="4" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="5" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="6" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="7" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="8" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="9" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="10" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="11" aria-label="Взять дрова">🪵</button>
+            <button class="log" data-log="12" aria-label="Взять дрова">🪵</button>
+          </div>
+        </div>
       </div>
 
-      <button id="heldFlashlight" class="held-item hidden">🔦</button>
-      <button id="batterySlot" class="held-item battery-slot hidden">🔋</button>
-
+      <button id="heldFlashlight" class="held-item hidden" aria-label="Вспышка фонарика">🔦</button>
+      <button id="batterySlot" class="held-item battery-slot hidden" aria-label="Вставить батарейку">🔋</button>
       <div id="flashCharge" class="flash-charge hidden">
         <div id="flashChargeFill" class="flash-charge-fill"></div>
       </div>
 
-      <button id="carriedWood" class="carried-wood hidden">🪵</button>
+      <button id="carriedWood" class="carried-wood hidden" aria-label="Перетащить дрова">🪵</button>
       <div id="flashBeam" class="flash-beam"></div>
       <div id="notice" class="notice">12 AM — смена началась.</div>
       <div id="message" class="message"></div>
+
+      <aside id="hud" class="hud">
+        <div>Огонь: <b id="fireValue">100%</b></div>
+        <div>Заряд фонаря: <b id="chargeValue">100%</b></div>
+        <div>Батарейки: <b id="batteryValue">4</b></div>
+        <div>Дрова: <b id="woodValue">12</b></div>
+      </aside>
+
+      <button id="openCameras" class="camera-open">📹 КАМЕРЫ</button>
+
+      <section id="cameraPanel" class="camera-panel hidden">
+        <div class="camera-header">
+          <span>СИСТЕМА НАБЛЮДЕНИЯ</span>
+          <button id="closeCameras">✕</button>
+        </div>
+        <div id="cameraFeed" class="camera-feed">
+          <div class="camera-noise"></div>
+          <div id="cameraScene" class="camera-scene">
+            <div class="cam-tunnel"></div>
+            <div id="cameraEnemy" class="camera-enemy hidden">?</div>
+          </div>
+          <div class="camera-label" id="cameraLabel">CAM 01 — ЛЕВЫЙ ПРОХОД</div>
+          <div class="camera-rec">● REC</div>
+        </div>
+        <div class="camera-buttons">
+          <button data-camera="1" class="selected">CAM 01</button>
+          <button data-camera="2">CAM 02</button>
+          <button data-camera="3">CAM 03</button>
+        </div>
+        <p class="camera-help">Камеры наблюдают за левым проходом.</p>
+      </section>
     </section>
 
     <section class="controls">
@@ -86,19 +136,8 @@
         <button id="turnFront" class="control-button">ПРЯМО</button>
         <button id="turnRight" class="control-button">ВПРАВО ▶</button>
       </div>
-
-      <div class="action-controls">
-        <button id="turnBack" class="action-button">🔥 К ПЕЧКЕ</button>
-      </div>
-
-      <div class="status">
-        <div>Фонарик: <span id="flashStatus">на столе</span></div>
-        <div>Запас: <span id="batteryStatus">4 батарейки</span></div>
-        <div>Дрова: <span id="woodStatus">на столе</span></div>
-        <div>Огонь: <span id="fireStatus">горит хорошо</span></div>
-      </div>
-
-      <div class="help">Свайп влево/вправо — повернуться. Нажимай прямо на предметы.</div>
+      <button id="turnBack" class="action-button">🔥 К ПЕЧКЕ</button>
+      <div class="help">Свайп по экрану — повернуться. Дрова бери под столом и перетаскивай к печке.</div>
     </section>
 
     <div id="overlay" class="overlay hidden">
