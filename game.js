@@ -41,7 +41,6 @@ let nene = {
   moveTimer: 14
 };
 
-/* Тилл / Дельта */
 let delta = {
   active: false,
   entered: false,
@@ -51,7 +50,6 @@ let delta = {
   danger: 0
 };
 
-/* Дробовик: 2 патрона заряжено, 4 запасных */
 let shotgunOwned = false;
 let aiming = false;
 let ammoLoaded = 2;
@@ -121,8 +119,8 @@ function load() {
     );
 
     if (data) {
-      shift = Math.max(1, Math.min(13, Number(data.shift) || 1));
-      woodCount = Number(data.woodCount) || 18;
+      shift = Math.max(1, Math.min(14, Number(data.shift) || 1));
+      woodCount = Math.max(0, Number(data.woodCount) || 18);
     }
   } catch (e) {}
 }
@@ -339,6 +337,8 @@ function startShift() {
   repairTime = 0;
 
   cameraOpen = false;
+  draggingWood = false;
+  dragId = null;
 
   resetEnemies();
 
@@ -411,7 +411,7 @@ function tick() {
     }
   }
 
-  /* ТИЛЛ / ДЕЛЬТА — ТОЛЬКО С ТРЕТЬЕЙ СМЕНЫ */
+  /* ТИЛЛ / ДЕЛЬТА */
   if (shift >= 3 && !delta.defeated) {
     if (!delta.active && !delta.entered) {
       delta.moveTimer--;
@@ -453,7 +453,7 @@ function tick() {
     say("Огонь почти погас! Возьми дрова.");
   }
 
-  /* ПЕРЕЗАРЯДКА СИГНАЛИЗАЦИИ */
+  /* СИГНАЛИЗАЦИЯ */
   if (alarmCooldown > 0) {
     alarmCooldown--;
   }
@@ -618,11 +618,14 @@ wood.addEventListener("pointermove", event => {
 
   const rect = scene.getBoundingClientRect();
 
-  wood.style.left =
-    (event.clientX - rect.left - dragX) + "px";
+  const x = event.clientX - rect.left - dragX;
+  const y = event.clientY - rect.top - dragY;
 
-  wood.style.top =
-    (event.clientY - rect.top - dragY) + "px";
+  const maxX = scene.clientWidth - wood.offsetWidth;
+  const maxY = scene.clientHeight - wood.offsetHeight;
+
+  wood.style.left = Math.max(0, Math.min(maxX, x)) + "px";
+  wood.style.top = Math.max(0, Math.min(maxY, y)) + "px";
 });
 
 wood.addEventListener("pointerup", () => {
@@ -789,7 +792,10 @@ function win() {
   clearInterval(gameInterval);
 
   const completedShift = shift;
-  shift = Math.min(13, shift + 1);
+
+  shift = completedShift >= 13
+    ? 14
+    : completedShift + 1;
 
   save();
 
@@ -801,7 +807,9 @@ function win() {
       ". В следующую ночь появятся новые опасности.";
 
   $("resultContinue").textContent =
-    completedShift >= 13 ? "Начать заново" : "Следующая смена";
+    completedShift >= 13
+      ? "Начать заново"
+      : "Следующая смена";
 
   showScreen("result");
 }
@@ -877,10 +885,6 @@ $("shootButton").addEventListener("click", () => {
 
   ammoLoaded--;
 
-  /*
-    Тилл / Дельта находится примерно в центре-справа.
-    Прицел должен попасть в область его фигуры.
-  */
   const hit =
     crosshairX >= 56 &&
     crosshairX <= 80 &&
@@ -943,6 +947,63 @@ $("lowerShotgunButton").addEventListener("click", () => {
   }
 });
 
+/* ПОЛНОЭКРАННЫЙ РЕЖИМ */
+const fullscreenButton = $("fullscreenButton");
+
+function updateFullscreenButton() {
+  const isFullscreen = Boolean(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement
+  );
+
+  fullscreenButton.textContent = isFullscreen
+    ? "Выйти из полного экрана"
+    : "Включить полный экран";
+}
+
+fullscreenButton.addEventListener("click", async () => {
+  try {
+    const isFullscreen = Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement
+    );
+
+    if (isFullscreen) {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    } else {
+      const target = $("game");
+
+      if (target.requestFullscreen) {
+        await target.requestFullscreen();
+      } else if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+      } else {
+        say("Браузер не поддерживает полный экран.");
+        return;
+      }
+
+      if (screen.orientation && screen.orientation.lock) {
+        try {
+          await screen.orientation.lock("landscape");
+        } catch (error) {
+          // Браузер может не поддерживать блокировку ориентации.
+        }
+      }
+    }
+  } catch (error) {
+    say("Не удалось включить полный экран. Попробуй другой браузер.");
+  }
+
+  updateFullscreenButton();
+});
+
+document.addEventListener("fullscreenchange", updateFullscreenButton);
+document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
+
 /* МЕНЮ */
 $("newGame").onclick = () => {
   shift = 1;
@@ -953,6 +1014,13 @@ $("newGame").onclick = () => {
 
 $("continueGame").onclick = () => {
   load();
+
+  if (shift >= 14) {
+    shift = 1;
+    woodCount = 18;
+    save();
+  }
+
   startShift();
 };
 
@@ -1027,6 +1095,7 @@ $("resultContinue").onclick = () => {
   if (shift >= 14) {
     shift = 1;
     woodCount = 18;
+    save();
   }
 
   startShift();
@@ -1055,4 +1124,5 @@ $("volumeSetting").oninput = event => {
 load();
 updateJournal();
 update();
+updateFullscreenButton();
 showScreen("menu");
