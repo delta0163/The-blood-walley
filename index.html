@@ -4,111 +4,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>The Walley of Blood</title>
+  <title>The Valley of Blood</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="game">
-    <div id="office">
-      <div class="back-wall"></div>
-      <div class="floor"></div>
+    <header class="topbar">
+      <div class="logo">THE VALLEY OF BLOOD</div>
+      <div id="clock">12 AM</div>
+    </header>
 
-      <div id="window" class="object">
-        <span>ОКНО</span>
-        <div class="window-cross"></div>
-        <div id="windowEnemy"></div>
+    <section id="office" class="office front">
+      <div class="darkness"></div>
+
+      <div class="wall">
+        <div class="wall-light"></div>
+        <div class="wall-mark"></div>
       </div>
 
-      <div id="leftHall" class="hall object">
-        <span>ЛЕВЫЙ ПРОХОД</span>
-        <div id="leftEnemy" class="enemy"></div>
+      <div id="leftPassage" class="passage left-passage">
+        <div class="passage-frame"></div>
+        <div class="passage-floor"></div>
+        <div id="leftEnemy" class="enemy">?</div>
+        <div class="passage-label">ЛЕВЫЙ ПРОХОД</div>
       </div>
 
-      <div id="rightHall" class="hall object">
-        <span>ПРАВЫЙ ПРОХОД</span>
-        <div id="rightEnemy" class="enemy"></div>
+      <div id="rightPassage" class="passage right-passage">
+        <div class="passage-frame"></div>
+        <div class="passage-floor"></div>
+        <div id="rightEnemy" class="enemy">?</div>
+        <div class="passage-label">ПРАВЫЙ ПРОХОД</div>
       </div>
 
-      <div id="stove" class="object">
-        <div id="fire"></div>
-        <span>ПЕЧЬ</span>
-      </div>
-
-      <div id="woodPile" class="object"></div>
-
-      <div id="desk" class="object">
-        <div id="monitor">
-          <span>WALLEY SECURITY</span>
+      <div id="backRoom" class="back-room">
+        <div class="stove">
+          <div class="stove-pipe"></div>
+          <div class="stove-body">
+            <div class="stove-door">
+              <div id="fire" class="fire"></div>
+            </div>
+          </div>
         </div>
-        <div id="deskFlashlight"></div>
+        <div class="back-label">ПЕЧКА</div>
       </div>
 
-      <div id="viewFlash"></div>
-    </div>
+      <div class="desk">
+        <div class="desk-top">
+          <button id="flashlightItem" class="item flashlight-item">
+            <span class="flashlight-icon">🔦</span>
+            <span>Фонарик</span>
+          </button>
 
-    <div id="hud">
-      <div id="clock">12:00 AM</div>
-      <div>ОГОНЬ: <span id="fireValue">100</span>%</div>
-      <div class="meter"><div id="fireMeter"></div></div>
-      <div>ДРОВА: <span id="woodValue">0</span></div>
-      <div>ЗАРЯД ФОНАРЯ: <span id="batteryValue">100</span>%</div>
-    </div>
+          <button id="woodItem" class="item wood-item">
+            <span class="wood-icon">🪵</span>
+            <span>Дрова</span>
+          </button>
 
-    <div id="message">Ночная смена ещё не началась.</div>
-
-    <div id="controls">
-      <div class="control-group">
-        <button id="cameraBtn">КАМЕРА</button>
-        <button id="flashlightBtn">ВЗЯТЬ ФОНАРИК</button>
-        <button id="checkBtn">ПРОВЕРИТЬ ПРОХОД</button>
-      </div>
-
-      <div class="control-group">
-        <button id="takeWoodBtn">ВЗЯТЬ ДРОВА</button>
-        <button id="stokeBtn">ПОДКИНУТЬ ДРОВА</button>
-      </div>
-    </div>
-
-    <div id="cameraPanel" class="overlay hidden">
-      <section class="panel">
-        <h2>КАМЕРА: ЛЕВЫЙ ПРОХОД</h2>
-        <div id="cameraFeed">
-          <div id="cameraEnemy"></div>
-          <span id="cameraStatus">СИГНАЛ СТАБИЛЕН</span>
+          <div class="paper">ЖУРНАЛ<br>СМЕНЫ</div>
+          <div class="mug">☕</div>
         </div>
-        <button id="scareBtn">ВКЛЮЧИТЬ ОТПУГИВАНИЕ</button>
-        <button id="hideBtn">СПРЯТАТЬСЯ</button>
-        <button id="closeCameraBtn">ЗАКРЫТЬ КАМЕРУ</button>
-      </section>
-    </div>
+        <div class="desk-front"></div>
+      </div>
 
-    <div id="hidePanel" class="overlay hidden">
-      <section class="panel">
-        <h2>ТЫ СПРЯТАЛСЯ</h2>
-        <p id="hideStatus">Слушай шаги. Не вылезай слишком рано.</p>
-        <button id="unhideBtn">ВЫЛЕЗТИ</button>
-      </section>
-    </div>
+      <div id="flashBeam" class="flash-beam"></div>
+      <div id="notice" class="notice">Смена началась...</div>
+      <div id="message" class="message"></div>
+    </section>
 
-    <div id="startPanel" class="overlay">
-      <section class="panel">
-        <h1>THE WALLEY OF BLOOD</h1>
-        <p>ПРОБНАЯ НОЧЬ</p>
-        <p class="description">
-          Ты остался один в охранном помещении.
-          Следи за проходами, поддерживай огонь в печи
-          и не дай существам проникнуть внутрь.
-        </p>
-        <button id="startBtn">НАЧАТЬ НОЧЬ</button>
-      </section>
-    </div>
+    <section class="controls">
+      <div class="turn-controls">
+        <button id="turnLeft" class="control-button">
+          ◀ ВЛЕВО
+        </button>
+        <button id="turnFront" class="control-button">
+          ПРЯМО
+        </button>
+        <button id="turnRight" class="control-button">
+          ВПРАВО ▶
+        </button>
+      </div>
 
-    <div id="endPanel" class="overlay hidden">
-      <section class="panel">
-        <h1 id="endTitle">СМЕНА ОКОНЧЕНА</h1>
-        <p id="endReason"></p>
-        <button id="restartBtn">ЗАНОВО</button>
-      </section>
+      <div class="action-controls">
+        <button id="useFlashlight" class="action-button" disabled>
+          🔦 СВЕТИТЬ
+        </button>
+        <button id="putWood" class="action-button" disabled>
+          🪵 ПОЛОЖИТЬ ДРОВА
+        </button>
+        <button id="turnBack" class="action-button">
+          🔥 К ПЕЧКЕ
+        </button>
+      </div>
+
+      <div class="status">
+        <div>Фонарик: <span id="flashStatus">на столе</span></div>
+        <div>Дрова: <span id="woodStatus">на столе</span></div>
+        <div>Огонь: <span id="fireStatus">горит</span></div>
+      </div>
+    </section>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h1 id="overlayTitle">КОНЕЦ СМЕНЫ</h1>
+        <p id="overlayText"></p>
+        <button id="restart">ЗАНОВО</button>
+      </div>
     </div>
   </main>
 
